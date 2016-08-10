@@ -39,6 +39,16 @@ describe('captureHar', function () {
       });
   });
 
+  it('also accepts a url directly', function () {
+    this.scope = nock('http://www.google.com')
+      .get('/')
+      .reply(200);
+    return captureHar('http://www.google.com')
+      .then(har => {
+        assert.deepPropertyVal(har, 'log.entries[0].request.url', 'http://www.google.com/');
+      });
+  });
+
   it('passes on headers', function () {
     this.scope = nock('http://www.google.com')
       .get('/')
