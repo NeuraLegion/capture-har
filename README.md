@@ -23,7 +23,7 @@ captureHar({
 ### `captureHar`
 
 ```
-captureHar(Object|String requestOptions, Object harOptions) -> Promise<Object>
+captureHar(Object|String requestOptions, [ Object harOptions ]) -> Promise<Object>
 ```
 
 #### `requestOptions`
@@ -32,6 +32,8 @@ The [options](https://www.npmjs.com/package/request#requestoptions-callback) for
 This can accept the url directly.
 
 #### `harOptions`
+
+Optional configuration for the resulting HAR object.
 
 ##### `withContent`
 
