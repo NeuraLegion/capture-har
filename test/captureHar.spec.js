@@ -4,6 +4,7 @@ var assert = require('chai').assert;
 var captureHar = require('./captureHar');
 var nock = require('nock');
 var lolex = require('lolex');
+var urlUtil = require('url');
 // var utils = require('./utils');
 
 describe('captureHar', function () {
@@ -266,6 +267,18 @@ describe('captureHar', function () {
     })
       .then(har => {
         assert.deepPropertyVal(har, 'log.entries[0].response.content.mimeType', 'x-unknown');
+      });
+  });
+
+  it('works with parsed url objects', function () {
+    this.scope = nock('http://www.google.com')
+      .get('/')
+      .reply(200);
+    return captureHar({
+      url: urlUtil.parse('http://www.google.com')
+    })
+      .then(har => {
+        assert.deepPropertyVal(har, 'log.entries[0].response.status', 200);
       });
   });
 });
