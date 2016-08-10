@@ -20,6 +20,8 @@ captureHar({
   });
 ```
 
+The result of code this can be found in [example.json](https://github.com/Woorank/capture-har/blob/master/example.json).
+
 ### `captureHar`
 
 ```
