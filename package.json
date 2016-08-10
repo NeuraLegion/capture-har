@@ -23,6 +23,7 @@
   "bugs": {
     "url": "https://github.com/Woorank/capture-har/issues"
   },
+  "engines" : { "node" : ">=6" },
   "homepage": "https://github.com/Woorank/capture-har",
   "devDependencies": {
     "chai": "^3.5.0",

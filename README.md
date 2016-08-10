@@ -6,6 +6,8 @@ This module makes a request and captures it as a [HAR](http://www.softwareishard
 Under the covers it uses [request](https://www.npmjs.com/package/request) and just passes throough all options.
 Currently only GET requests are supported although other methods will probably work. The request body might not be properly captured though.
 
+[![Build Status](https://travis-ci.org/Woorank/capture-har.svg?branch=master)](https://travis-ci.org/Woorank/capture-har)
+
 ## API
 
 ```js
