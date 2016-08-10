@@ -115,6 +115,7 @@ describe('captureHar', function () {
         assert.deepPropertyVal(har, 'log.entries[0].response.status', 0);
         assert.deepPropertyVal(har, 'log.entries[0].response._error.code', 'ENOTFOUND');
         assert.deepPropertyVal(har, 'log.entries[0].response._error.message', 'Error: getaddrinfo ENOTFOUND');
+        assert.notDeepProperty(har, 'log.entries[0].response._error.stack');
       });
   });
 

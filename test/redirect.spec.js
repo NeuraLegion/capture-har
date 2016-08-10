@@ -17,14 +17,15 @@ describe('redirects', function () {
   it('handles invalid redirects', function () {
     this.scope = nock('http://www.google.com')
       .get('/')
-      .reply(301, null);
+      .reply(301, null); // missing location header
     return captureHar({
       url: 'http://www.google.com'
     })
       .then(har => {
         assert.deepPropertyVal(har, 'log.entries[0].response.status', 301);
-        // should this add an _error property or is just one entry enough information?
         assert.lengthOf(har.log.entries, 1);
+        assert.deepPropertyVal(har, 'log.entries[0].response._error.message', 'Missing location header');
+        assert.deepPropertyVal(har, 'log.entries[0].response._error.code', 'NOLOCATION');
       });
   });
 
@@ -53,6 +54,9 @@ describe('redirects', function () {
 
         assert.deepPropertyVal(har, 'log.entries[1].startedDateTime', '2010-01-01T00:00:01.000Z');
         assert.deepPropertyVal(har, 'log.entries[1].time', 2000);
+
+        assert.notDeepProperty(har, 'log.entries[1].response._error');
+        assert.notDeepProperty(har, 'log.entries[1].response._error');
       });
   });
 
@@ -103,6 +107,20 @@ describe('redirects', function () {
     })
       .then(har => {
         assert.lengthOf(har.log.entries, 2);
+      });
+  });
+
+  it('handles location header on other statuscodes', function () {
+    this.scope = nock('http://www.google.com')
+      .get('/')
+      .reply(200, 'hello', { location: '/path' })
+      .get('/path')
+      .reply(200);
+    return captureHar({
+      url: 'http://www.google.com'
+    })
+      .then(har => {
+        assert.lengthOf(har.log.entries, 1);
       });
   });
 });

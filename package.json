@@ -4,7 +4,7 @@
   "description": "",
   "main": "lib",
   "scripts": {
-    "test": "npm run lint && npm run mocha",
+    "test": "npm run lint && nyc npm run mocha",
     "lint": "semistandard | snazzy",
     "mocha": "mocha ./test",
     "watch:mocha": "mocha -w ./test"
@@ -23,7 +23,9 @@
   "bugs": {
     "url": "https://github.com/Woorank/capture-har/issues"
   },
-  "engines" : { "node" : ">=6" },
+  "engines": {
+    "node": ">=6"
+  },
   "homepage": "https://github.com/Woorank/capture-har",
   "devDependencies": {
     "chai": "^3.5.0",
@@ -31,6 +33,7 @@
     "lolex": "^1.5.1",
     "mocha": "^3.0.2",
     "nock": "^8.0.0",
+    "nyc": "^7.1.0",
     "semistandard": "^8.0.0",
     "snazzy": "^4.0.1"
   },
