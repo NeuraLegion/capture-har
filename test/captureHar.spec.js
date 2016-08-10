@@ -4,7 +4,7 @@ var assert = require('chai').assert;
 var captureHar = require('./captureHar');
 var nock = require('nock');
 var lolex = require('lolex');
-var utils = require('./utils');
+// var utils = require('./utils');
 
 describe('captureHar', function () {
   afterEach(function () {
@@ -212,6 +212,49 @@ describe('captureHar', function () {
     })
       .then(har => {
         assert.lengthOf(har.log.entries[0].response.cookies, 0);
+      });
+  });
+
+  it('doesn\'t crash on numerical content-length header', function () {
+    this.scope = nock('http://www.google.com')
+      .get('/')
+      .reply(200, 'hello', {
+        'content-length': 100
+      });
+    return captureHar({
+      url: 'http://www.google.com'
+    })
+      .then(har => {
+        assert.deepPropertyVal(har, 'log.entries[0].response.headers[0].name', 'content-length');
+        assert.deepPropertyVal(har, 'log.entries[0].response.headers[0].value', '100');
+      });
+  });
+
+  it('reads mime type properly', function () {
+    this.scope = nock('http://www.google.com')
+      .get('/')
+      .reply(200, 'hello', {
+        'content-type': 'image/svg+xml; charset=utf-8'
+      });
+    return captureHar({
+      url: 'http://www.google.com'
+    })
+      .then(har => {
+        assert.deepPropertyVal(har, 'log.entries[0].response.content.mimeType', 'image/svg+xml');
+      });
+  });
+
+  it('reads invalid mimetypes properly', function () {
+    this.scope = nock('http://www.google.com')
+      .get('/')
+      .reply(200, 'hello', {
+        'content-type': 'invalid'
+      });
+    return captureHar({
+      url: 'http://www.google.com'
+    })
+      .then(har => {
+        assert.deepPropertyVal(har, 'log.entries[0].response.content.mimeType', 'x-unknown');
       });
   });
 });

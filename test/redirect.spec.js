@@ -4,7 +4,7 @@ var assert = require('chai').assert;
 var captureHar = require('./captureHar');
 var nock = require('nock');
 var lolex = require('lolex');
-var utils = require('./utils');
+// var utils = require('./utils');
 
 describe('redirects', function () {
   afterEach(function () {
@@ -87,23 +87,22 @@ describe('redirects', function () {
       });
   });
 
-  it('can disable redirect recording', function () {
+  it('can do followRedirect by function', function () {
     this.scope = nock('http://www.google.com')
       .get('/')
-      .reply(() => {
-        return [ 301, null, { location: '/maps' } ];
-      })
-      .get('/maps')
-      .reply(() => {
-        return [ 200, 'body' ];
-      });
+      .reply(301, null, { location: '/1', redirect: '1' })
+      .get('/1')
+      .reply(301, null, { location: '/2' })
+      .get('/1')
+      .reply(200);
     return captureHar({
-      url: 'http://www.google.com'
-    }, { withRedirects: false })
+      url: 'http://www.google.com',
+      followRedirect: (res) => {
+        return !!res.headers.redirect;
+      }
+    })
       .then(har => {
-        assert.lengthOf(har.log.entries, 1);
-        assert.deepPropertyVal(har, 'log.entries[0].request.url', 'http://www.google.com/');
-        assert.deepPropertyVal(har, 'log.entries[0].response.status', 200);
+        assert.lengthOf(har.log.entries, 2);
       });
   });
 });

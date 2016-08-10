@@ -1,11 +1,11 @@
 {
   "name": "capture-har",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "",
   "main": "lib",
   "scripts": {
     "test": "npm run lint && npm run mocha",
-    "lint": "smistandard | snazzy",
+    "lint": "semistandard | snazzy",
     "mocha": "mocha ./test",
     "watch:mocha": "mocha -w ./test"
   },
@@ -34,6 +34,7 @@
     "snazzy": "^4.0.1"
   },
   "dependencies": {
+    "content-type": "^1.0.2",
     "request": "^2.74.0",
     "request-promise": "^4.1.1",
     "tough-cookie": "^2.3.1"
