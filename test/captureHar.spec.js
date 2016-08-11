@@ -193,7 +193,7 @@ describe('captureHar', function () {
       });
   });
 
-  it.only('understands single set-cookie', function () {
+  it('understands single set-cookie', function () {
     return utils.mockServer(3000, (req, res) => {
       res.setHeader('set-cookie', 'cookie=value');
       res.end('hello');
