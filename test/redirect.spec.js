@@ -2,25 +2,23 @@
 
 var assert = require('chai').assert;
 var captureHar = require('./captureHar');
-var nock = require('nock');
 var lolex = require('lolex');
-// var utils = require('./utils');
+var utils = require('./utils');
 
-describe('redirects', function () {
+describe('redirect express', function () {
   afterEach(function () {
     if (this.clock) {
       this.clock.uninstall();
     }
-    nock.cleanAll();
+    return utils.cleanMocks();
   });
 
   it('handles invalid redirects', function () {
-    this.scope = nock('http://www.google.com')
-      .get('/')
-      .reply(301, null); // missing location header
-    return captureHar({
-      url: 'http://www.google.com'
+    return utils.mockServer(3000, (req, res) => {
+      res.statusCode = 301;
+      res.end();
     })
+      .then(() => captureHar({ url: 'http://localhost:3000' }))
       .then(har => {
         assert.deepPropertyVal(har, 'log.entries[0].response.status', 301);
         assert.lengthOf(har.log.entries, 1);
@@ -31,26 +29,25 @@ describe('redirects', function () {
 
   it('records redirects', function () {
     this.clock = lolex.install(1262304000000);
-    this.scope = nock('http://www.google.com')
-      .get('/')
-      .reply(() => {
+    return utils.mockServer(3000, (req, res) => {
+      if (req.url === '/') {
         this.clock.tick(1000);
-        return [ 301, null, { location: '/maps' } ];
-      })
-      .get('/maps')
-      .reply(() => {
+        res.statusCode = 301;
+        res.setHeader('location', '/maps');
+        res.end();
+      } else if (req.url === '/maps') {
         this.clock.tick(2000);
-        return [ 200, 'body' ];
-      });
-    return captureHar({
-      url: 'http://www.google.com'
+        res.statusCode = 200;
+        res.end('body');
+      }
     })
+      .then(() => captureHar({ url: 'http://localhost:3000' }))
       .then(har => {
         assert.deepPropertyVal(har, 'log.entries[0].startedDateTime', '2010-01-01T00:00:00.000Z');
         assert.deepPropertyVal(har, 'log.entries[0].time', 1000);
 
         assert.deepPropertyVal(har, 'log.entries[0].response.status', 301);
-        assert.deepPropertyVal(har, 'log.entries[0].response.redirectURL', 'http://www.google.com/maps');
+        assert.deepPropertyVal(har, 'log.entries[0].response.redirectURL', 'http://localhost:3000/maps');
 
         assert.deepPropertyVal(har, 'log.entries[1].startedDateTime', '2010-01-01T00:00:01.000Z');
         assert.deepPropertyVal(har, 'log.entries[1].time', 2000);
@@ -61,29 +58,26 @@ describe('redirects', function () {
   });
 
   it('can disable automatic redirect', function () {
-    this.scope = nock('http://www.google.com')
-      .get('/')
-      .reply(301, null, { location: '/maps' });
-    return captureHar({
-      url: 'http://www.google.com',
-      followRedirect: false
+    return utils.mockServer(3000, (req, res) => {
+      res.statusCode = 301;
+      res.setHeader('location', '/maps');
+      res.end();
     })
+      .then(() => captureHar({ url: 'http://localhost:3000', followRedirect: false }))
       .then(har => {
         assert.deepPropertyVal(har, 'log.entries[0].response.status', 301);
-        assert.deepPropertyVal(har, 'log.entries[0].response.redirectURL', 'http://www.google.com/maps');
+        assert.deepPropertyVal(har, 'log.entries[0].response.redirectURL', 'http://localhost:3000/maps');
         assert.lengthOf(har.log.entries, 1);
       });
   });
 
   it('can do maxRedirects', function () {
-    this.scope = nock('http://www.google.com')
-      .get('/')
-      .times(10)
-      .reply(301, null, { location: '/' });
-    return captureHar({
-      url: 'http://www.google.com',
-      maxRedirects: 5
+    return utils.mockServer(3000, (req, res) => {
+      res.statusCode = 301;
+      res.setHeader('location', '/');
+      res.end();
     })
+      .then(() => captureHar({ url: 'http://localhost:3000', maxRedirects: 5 }))
       .then(har => {
         assert.lengthOf(har.log.entries, 5);
         assert.deepPropertyVal(har, 'log.entries[4].response._error.message', 'Max redirects exceeded');
@@ -92,35 +86,65 @@ describe('redirects', function () {
   });
 
   it('can do followRedirect by function', function () {
-    this.scope = nock('http://www.google.com')
-      .get('/')
-      .reply(301, null, { location: '/1', redirect: '1' })
-      .get('/1')
-      .reply(301, null, { location: '/2' })
-      .get('/1')
-      .reply(200);
-    return captureHar({
-      url: 'http://www.google.com',
-      followRedirect: (res) => {
-        return !!res.headers.redirect;
+    return utils.mockServer(3000, (req, res) => {
+      if (req.url === '/') {
+        res.statusCode = 301;
+        res.setHeader('location', '/1');
+        res.setHeader('redirect', '1');
+        res.end();
+      } else if (req.url === '/1') {
+        res.statusCode = 301;
+        res.setHeader('location', '/2');
+        res.end();
+      } else if (req.url === '/2') {
+        res.end();
       }
     })
+      .then(() => captureHar({
+        url: 'http://localhost:3000',
+        followRedirect: (res) => {
+          return !!res.headers.redirect;
+        }
+      }))
       .then(har => {
         assert.lengthOf(har.log.entries, 2);
       });
   });
 
   it('handles location header on other statuscodes', function () {
-    this.scope = nock('http://www.google.com')
-      .get('/')
-      .reply(200, 'hello', { location: '/path' })
-      .get('/path')
-      .reply(200);
-    return captureHar({
-      url: 'http://www.google.com'
+    return utils.mockServer(3000, (req, res) => {
+      res.setHeader('location', '/path');
+      res.end();
     })
+      .then(() => captureHar({ url: 'http://localhost:3000' }))
       .then(har => {
         assert.lengthOf(har.log.entries, 1);
+      });
+  });
+
+  it('redirect should rewrite the host header when it was defined', function () {
+    return Promise.all([
+      utils.mockServer(3000, (req, res) => {
+        res.statusCode = 301;
+        res.setHeader('location', 'http://localhost:3001');
+        res.end(`${req.rawHeaders[0]}: ${req.rawHeaders[1]}`);
+      }),
+      utils.mockServer(3001, (req, res) => res.end(`${req.rawHeaders[0]}: ${req.rawHeaders[1]}`))
+    ])
+      .then(() => captureHar({
+        url: 'http://localhost:3000',
+        headers: {
+          Host: 'localhost:3000'
+        }
+      }))
+      .then(har => {
+        assert.deepPropertyVal(har, 'log.entries[0].response.content.text', 'Host: localhost:3000');
+        assert.deepPropertyVal(har, 'log.entries[1].response.content.text', 'Host: localhost:3001');
+
+        assert.deepPropertyVal(har, 'log.entries[0].request.headers[0].name', 'host');
+        assert.deepPropertyVal(har, 'log.entries[0].request.headers[0].value', 'localhost:3000');
+        assert.deepPropertyVal(har, 'log.entries[1].request.headers[0].name', 'host');
+        assert.deepPropertyVal(har, 'log.entries[1].request.headers[0].value', 'localhost:3001');
       });
   });
 });

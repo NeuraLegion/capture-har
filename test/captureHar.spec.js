@@ -2,36 +2,33 @@
 
 var assert = require('chai').assert;
 var captureHar = require('./captureHar');
-var nock = require('nock');
 var lolex = require('lolex');
+var utils = require('./utils');
 var urlUtil = require('url');
-// var utils = require('./utils');
 
 describe('captureHar', function () {
   afterEach(function () {
     if (this.clock) {
       this.clock.uninstall();
     }
-    nock.cleanAll();
+    return utils.cleanMocks();
   });
 
   it('captures simple requests', function () {
     this.clock = lolex.install(1262304000000);
-    this.scope = nock('http://www.google.com')
-      .get('/')
-      .reply(200, () => {
-        this.clock.tick(120);
-        return 'body';
-      });
-    return captureHar({
-      url: 'http://www.google.com'
+    return utils.mockServer(3000, (req, res) => {
+      this.clock.tick(120);
+      res.end('body');
     })
+      .then(() => captureHar({ url: 'http://localhost:3000' }))
       .then(har => {
         assert.deepPropertyVal(har, 'log.entries[0].startedDateTime', '2010-01-01T00:00:00.000Z');
         assert.deepPropertyVal(har, 'log.entries[0].time', 120);
 
         assert.deepPropertyVal(har, 'log.entries[0].request.method', 'GET');
-        assert.deepPropertyVal(har, 'log.entries[0].request.url', 'http://www.google.com/');
+        assert.deepPropertyVal(har, 'log.entries[0].request.url', 'http://localhost:3000/');
+        assert.deepPropertyVal(har, 'log.entries[0].request.headers[0].name', 'host');
+        assert.deepPropertyVal(har, 'log.entries[0].request.headers[0].value', 'localhost:3000');
 
         assert.deepPropertyVal(har, 'log.entries[0].response.status', 200);
         assert.deepPropertyVal(har, 'log.entries[0].response.content.size', 4);
@@ -41,57 +38,65 @@ describe('captureHar', function () {
   });
 
   it('also accepts a url directly', function () {
-    this.scope = nock('http://www.google.com')
-      .get('/')
-      .reply(200);
-    return captureHar('http://www.google.com')
+    return utils.mockServer(3000, (req, res) => res.end())
+      .then(() => captureHar('http://localhost:3000'))
       .then(har => {
-        assert.deepPropertyVal(har, 'log.entries[0].request.url', 'http://www.google.com/');
+        assert.deepPropertyVal(har, 'log.entries[0].request.url', 'http://localhost:3000/');
+      });
+  });
+
+  it('works with parsed url objects', function () {
+    return utils.mockServer(3000, (req, res) => res.end())
+      .then(() => captureHar({ url: urlUtil.parse('http://localhost:3000') }))
+      .then(har => {
+        assert.deepPropertyVal(har, 'log.entries[0].response.status', 200);
       });
   });
 
   it('passes on headers', function () {
-    this.scope = nock('http://www.google.com')
-      .get('/')
-      .reply(200, { hello: 'world' }, {
-        'content-type': 'application/json',
-        'x-test': 'response',
-        'x-array': [ 'x', 'y' ]
-      });
-    return captureHar({
-      url: 'http://www.google.com',
-      headers: {
-        'host': 'www.google.com',
-        'x-test': 'request'
-      }
+    return utils.mockServer(3000, (req, res) => {
+      res.setHeader('content-type', 'application/json');
+      res.setHeader('x-test', 'response');
+      // this test is for checking how handling duplicate headers works
+      // node can only duplicate set-cookie headers
+      res.setHeader('set-cookie', ['x', 'y']);
+      res.end('hello');
     })
+      .then(() => captureHar({
+        url: 'http://localhost:3000',
+        headers: {
+          'host': 'www.google.com',
+          'x-test': 'request'
+        }
+      }))
       .then(har => {
-        assert.deepPropertyVal(har, 'log.entries[0].request.headers[0].name', 'host');
-        assert.deepPropertyVal(har, 'log.entries[0].request.headers[0].value', 'www.google.com');
-        assert.deepPropertyVal(har, 'log.entries[0].request.headers[1].name', 'x-test');
-        assert.deepPropertyVal(har, 'log.entries[0].request.headers[1].value', 'request');
+        assert.ok(har.log.entries[0].request.headers.find(header => {
+          return header.name === 'host' && header.value === 'www.google.com';
+        }), 'host request header');
+        assert.ok(har.log.entries[0].request.headers.find(header => {
+          return header.name === 'x-test' && header.value === 'request';
+        }), 'x-test request header');
 
-        assert.deepPropertyVal(har, 'log.entries[0].response.headers[0].name', 'content-type');
-        assert.deepPropertyVal(har, 'log.entries[0].response.headers[0].value', 'application/json');
-        assert.deepPropertyVal(har, 'log.entries[0].response.headers[1].name', 'x-test');
-        assert.deepPropertyVal(har, 'log.entries[0].response.headers[1].value', 'response');
+        assert.ok(har.log.entries[0].response.headers.find(header => {
+          return header.name === 'content-type' && header.value === 'application/json';
+        }), 'content-type response header');
+        assert.ok(har.log.entries[0].response.headers.find(header => {
+          return header.name === 'x-test' && header.value === 'response';
+        }), 'host response header');
+        assert.ok(har.log.entries[0].response.headers.find(header => {
+          return header.name === 'set-cookie' && header.value === 'x';
+        }), 'x-array response header');
+        assert.ok(har.log.entries[0].response.headers.find(header => {
+          return header.name === 'set-cookie' && header.value === 'y';
+        }), 'x-array response header');
+
         assert.deepPropertyVal(har, 'log.entries[0].response.content.mimeType', 'application/json');
-
-        assert.deepPropertyVal(har, 'log.entries[0].response.headers[2].name', 'x-array');
-        assert.deepPropertyVal(har, 'log.entries[0].response.headers[2].value', 'x');
-        assert.deepPropertyVal(har, 'log.entries[0].response.headers[3].name', 'x-array');
-        assert.deepPropertyVal(har, 'log.entries[0].response.headers[3].value', 'y');
       });
   });
 
   it('parses querystring', function () {
-    this.scope = nock('http://www.google.com')
-      .get('/')
-      .query({ param1: 'value1', param2: 'value2' })
-      .reply(200, 'body');
-    return captureHar({
-      url: 'http://www.google.com?param1=value1&param2=value2'
-    })
+    return utils.mockServer(3000, (req, res) => res.end())
+      .then(() => captureHar({ url: 'http://localhost:3000?param1=value1&param2=value2' }))
       .then(har => {
         assert.deepPropertyVal(har, 'log.entries[0].request.queryString[0].name', 'param1');
         assert.deepPropertyVal(har, 'log.entries[0].request.queryString[0].value', 'value1');
@@ -101,44 +106,33 @@ describe('captureHar', function () {
   });
 
   it('handles request errors', function () {
-    var err = new Error('Error: getaddrinfo ENOTFOUND');
-    err.code = 'ENOTFOUND';
-    this.scope = nock('http://www.google.com')
-      .get('/')
-      .replyWithError(err);
-    return captureHar({
-      url: 'http://www.google.com'
-    })
+    return captureHar({ url: 'http://x' })
       .then(har => {
         assert.deepPropertyVal(har, 'log.entries[0].request.method', 'GET');
-        assert.deepPropertyVal(har, 'log.entries[0].request.url', 'http://www.google.com/');
+        assert.deepPropertyVal(har, 'log.entries[0].request.url', 'http://x/');
 
         assert.deepPropertyVal(har, 'log.entries[0].response.status', 0);
         assert.deepPropertyVal(har, 'log.entries[0].response._error.code', 'ENOTFOUND');
-        assert.deepPropertyVal(har, 'log.entries[0].response._error.message', 'Error: getaddrinfo ENOTFOUND');
+        assert.deepPropertyVal(har, 'log.entries[0].response._error.message', 'getaddrinfo ENOTFOUND x x:80');
         assert.notDeepProperty(har, 'log.entries[0].response._error.stack');
+        assert.deepPropertyVal(har, 'log.entries[0].response.content.mimeType', 'x-unknown');
       });
   });
 
   it('handles status errors', function () {
-    this.scope = nock('http://www.google.com')
-      .get('/')
-      .reply(404);
-    return captureHar({
-      url: 'http://www.google.com'
+    return utils.mockServer(3000, (req, res) => {
+      res.statusCode = 404;
+      res.end();
     })
+      .then(() => captureHar({ url: 'http://localhost:3000' }))
       .then(har => {
         assert.deepPropertyVal(har, 'log.entries[0].response.status', 404);
       });
   });
 
   it('can ignore body content', function () {
-    this.scope = nock('http://www.google.com')
-      .get('/')
-      .reply(200, 'hello');
-    return captureHar({
-      url: 'http://www.google.com'
-    }, { withContent: false })
+    return utils.mockServer(3000, (req, res) => res.end('hello'))
+      .then(() => captureHar({ url: 'http://localhost:3000' }, { withContent: false }))
       .then(har => {
         assert.deepPropertyVal(har, 'log.entries[0].response.content.size', 5);
         assert.deepPropertyVal(har, 'log.entries[0].response.content.mimeType', 'x-unknown');
@@ -147,33 +141,31 @@ describe('captureHar', function () {
   });
 
   it('normalizes methods', function () {
-    this.scope = nock('http://www.google.com')
-      .post('/')
-      .reply(200, 'hello');
-    return captureHar({
-      method: 'post',
-      url: 'http://www.google.com'
-    })
+    return utils.mockServer(3000, (req, res) => res.end(req.method))
+      .then(() => captureHar({
+        method: 'post',
+        url: 'http://localhost:3000'
+      }))
       .then(har => {
         assert.deepPropertyVal(har, 'log.entries[0].request.method', 'POST');
+        assert.deepPropertyVal(har, 'log.entries[0].response.content.text', 'POST');
       });
   });
 
   it('understands cookies', function () {
-    this.scope = nock('http://www.google.com')
-      .get('/')
-      .reply(200, 'hello', {
-        'set-cookie': [
-          'cookie3=value3; Expires=Fri Jan 01 2010 01:00:00 GMT+0100 (CET); Domain=www.google.com; Path=/path; Secure; HttpOnly',
-          'cookie4=value4'
-        ]
-      });
-    return captureHar({
-      url: 'http://www.google.com',
-      headers: {
-        cookie: 'cookie1=value1; cookie2=value2'
-      }
+    return utils.mockServer(3000, (req, res) => {
+      res.setHeader('set-cookie', [
+        'cookie3=value3; Domain=www.google.com; Path=/path; Expires=Fri, 01 Jan 2010 00:00:00 GMT; HttpOnly; Secure',
+        'cookie4=value4'
+      ]);
+      res.end('hello');
     })
+      .then(() => captureHar({
+        url: 'http://localhost:3000',
+        headers: {
+          cookie: 'cookie1=value1; cookie2=value2'
+        }
+      }))
       .then(har => {
         assert.deepPropertyVal(har, 'log.entries[0].request.cookies[0].name', 'cookie1');
         assert.deepPropertyVal(har, 'log.entries[0].request.cookies[0].value', 'value1');
@@ -189,24 +181,24 @@ describe('captureHar', function () {
         assert.deepPropertyVal(har, 'log.entries[0].response.cookies[0].value', 'value3');
         assert.deepPropertyVal(har, 'log.entries[0].response.cookies[0].path', '/path');
         assert.deepPropertyVal(har, 'log.entries[0].response.cookies[0].domain', 'www.google.com');
-        assert.deepPropertyVal(har, 'log.entries[0].response.cookies[0].expires', '2010-01-01T01:00:00.000Z');
+        assert.deepPropertyVal(har, 'log.entries[0].response.cookies[0].expires', '2010-01-01T00:00:00.000Z');
         assert.deepPropertyVal(har, 'log.entries[0].response.cookies[0].httpOnly', true);
         assert.deepPropertyVal(har, 'log.entries[0].response.cookies[0].secure', true);
         assert.deepPropertyVal(har, 'log.entries[0].response.cookies[1].name', 'cookie4');
         assert.deepPropertyVal(har, 'log.entries[0].response.cookies[1].value', 'value4');
         assert.notDeepProperty(har, 'log.entries[0].response.cookies[1].path');
+        assert.deepPropertyVal(har, 'log.entries[0].response.cookies[1].httpOnly', false);
+        assert.deepPropertyVal(har, 'log.entries[0].response.cookies[1].secure', false);
+        assert.notDeepProperty(har, 'log.entries[0].response.cookies[1].domain');
       });
   });
 
-  it('understands single set-cookie', function () {
-    this.scope = nock('http://www.google.com')
-      .get('/')
-      .reply(200, 'hello', {
-        'set-cookie': 'cookie=value'
-      });
-    return captureHar({
-      url: 'http://www.google.com'
+  it.only('understands single set-cookie', function () {
+    return utils.mockServer(3000, (req, res) => {
+      res.setHeader('set-cookie', 'cookie=value');
+      res.end('hello');
     })
+      .then(() => captureHar({ url: 'http://localhost:3000' }))
       .then(har => {
         assert.deepPropertyVal(har, 'log.entries[0].response.cookies[0].name', 'cookie');
         assert.deepPropertyVal(har, 'log.entries[0].response.cookies[0].value', 'value');
@@ -214,71 +206,36 @@ describe('captureHar', function () {
   });
 
   it('doesn\'t crash on invalid cookies', function () {
-    this.scope = nock('http://www.google.com')
-      .get('/')
-      .reply(200, 'hello', {
-        'set-cookie': 'Secure; HttpOnly'
-      });
-    return captureHar({
-      url: 'http://www.google.com'
+    return utils.mockServer(3000, (req, res) => {
+      res.setHeader('set-cookie', 'Secure; HttpOnly');
+      res.end('hello');
     })
+      .then(() => captureHar({ url: 'http://localhost:3000' }))
       .then(har => {
         assert.lengthOf(har.log.entries[0].response.cookies, 0);
-      });
-  });
-
-  it('doesn\'t crash on numerical content-length header', function () {
-    this.scope = nock('http://www.google.com')
-      .get('/')
-      .reply(200, 'hello', {
-        'content-length': 100
-      });
-    return captureHar({
-      url: 'http://www.google.com'
-    })
-      .then(har => {
-        assert.deepPropertyVal(har, 'log.entries[0].response.headers[0].name', 'content-length');
-        assert.deepPropertyVal(har, 'log.entries[0].response.headers[0].value', '100');
+        assert.deepPropertyVal(har, 'log.entries[0].response.headers[0].value', 'Secure; HttpOnly');
       });
   });
 
   it('reads mime type properly', function () {
-    this.scope = nock('http://www.google.com')
-      .get('/')
-      .reply(200, 'hello', {
-        'content-type': 'image/svg+xml; charset=utf-8'
-      });
-    return captureHar({
-      url: 'http://www.google.com'
+    return utils.mockServer(3000, (req, res) => {
+      res.setHeader('content-type', 'image/svg+xml; charset=utf-8');
+      res.end('hello');
     })
+      .then(() => captureHar({ url: 'http://localhost:3000' }))
       .then(har => {
         assert.deepPropertyVal(har, 'log.entries[0].response.content.mimeType', 'image/svg+xml');
       });
   });
 
   it('reads invalid mimetypes properly', function () {
-    this.scope = nock('http://www.google.com')
-      .get('/')
-      .reply(200, 'hello', {
-        'content-type': 'invalid'
-      });
-    return captureHar({
-      url: 'http://www.google.com'
+    return utils.mockServer(3000, (req, res) => {
+      res.writeHead(200, { 'content-type': 'invalid' });
+      res.end('hello');
     })
+      .then(() => captureHar({ url: 'http://localhost:3000' }))
       .then(har => {
         assert.deepPropertyVal(har, 'log.entries[0].response.content.mimeType', 'x-unknown');
-      });
-  });
-
-  it('works with parsed url objects', function () {
-    this.scope = nock('http://www.google.com')
-      .get('/')
-      .reply(200);
-    return captureHar({
-      url: urlUtil.parse('http://www.google.com')
-    })
-      .then(har => {
-        assert.deepPropertyVal(har, 'log.entries[0].response.status', 200);
       });
   });
 });
