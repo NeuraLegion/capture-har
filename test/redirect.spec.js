@@ -79,9 +79,9 @@ describe('redirect express', function () {
     })
       .then(() => captureHar({ url: 'http://localhost:3000', maxRedirects: 5 }))
       .then(har => {
-        assert.lengthOf(har.log.entries, 5);
-        assert.deepPropertyVal(har, 'log.entries[4].response._error.message', 'Max redirects exceeded');
-        assert.deepPropertyVal(har, 'log.entries[4].response._error.code', 'MAXREDIRECTS');
+        assert.lengthOf(har.log.entries, 6);
+        assert.deepPropertyVal(har, 'log.entries[5].response._error.message', 'Max redirects exceeded');
+        assert.deepPropertyVal(har, 'log.entries[5].response._error.code', 'MAXREDIRECTS');
       });
   });
 
@@ -145,6 +145,102 @@ describe('redirect express', function () {
         assert.deepPropertyVal(har, 'log.entries[0].request.headers[0].value', 'localhost:3000');
         assert.deepPropertyVal(har, 'log.entries[1].request.headers[0].name', 'host');
         assert.deepPropertyVal(har, 'log.entries[1].request.headers[0].value', 'localhost:3001');
+      });
+  });
+
+  it('redirect should rewrite the host header when it was missing', function () {
+    return Promise.all([
+      utils.mockServer(3000, (req, res) => {
+        res.statusCode = 301;
+        res.setHeader('location', 'http://localhost:3001');
+        res.end(`${req.rawHeaders[0]}: ${req.rawHeaders[1]}`);
+      }),
+      utils.mockServer(3001, (req, res) => res.end(`${req.rawHeaders[0]}: ${req.rawHeaders[1]}`))
+    ])
+      .then(() => captureHar({
+        url: 'http://localhost:3000',
+        headers: {}
+      }))
+      .then(har => {
+        assert.deepPropertyVal(har, 'log.entries[0].response.content.text', 'host: localhost:3000');
+        assert.deepPropertyVal(har, 'log.entries[1].response.content.text', 'host: localhost:3001');
+
+        assert.deepPropertyVal(har, 'log.entries[0].request.headers[0].name', 'host');
+        assert.deepPropertyVal(har, 'log.entries[0].request.headers[0].value', 'localhost:3000');
+        assert.deepPropertyVal(har, 'log.entries[1].request.headers[0].name', 'host');
+        assert.deepPropertyVal(har, 'log.entries[1].request.headers[0].value', 'localhost:3001');
+      });
+  });
+
+  it('redirect should log response information on unsupported protocol', function () {
+    return utils.mockServer(3000, (req, res) => {
+      res.statusCode = 301;
+      res.setHeader('location', 'file:///etc/passwd');
+      res.end();
+    })
+      .then(() => captureHar({
+        url: 'http://localhost:3000'
+      }))
+      .then(har => {
+        assert.deepPropertyVal(har, 'log.entries[0].response.status', 301);
+        assert.deepPropertyVal(har, 'log.entries[0].response.headers[0].name', 'location');
+        assert.deepPropertyVal(har, 'log.entries[0].response.headers[0].value', 'file:///etc/passwd');
+
+        assert.deepPropertyVal(har, 'log.entries[1].request.url', 'file:///etc/passwd');
+        assert.deepPropertyVal(har, 'log.entries[1].request.headers.length', 0);
+
+        assert.deepPropertyVal(har, 'log.entries[1].response._error.message', 'Invalid URI "file:///etc/passwd"');
+      });
+  });
+
+  it('redirect should log correct host and url on IPv6 ip addresses', function () {
+    return utils.mockServer(3000, (req, res) => {
+      res.statusCode = 301;
+      res.setHeader('location', 'http://[::1]:3000/');
+      res.end();
+    })
+      .then(() => captureHar({
+        url: 'http://localhost:3000',
+        followRedirect: true,
+        maxRedirects: 1
+      }))
+      .then(har => {
+        assert.deepPropertyVal(har, 'log.entries[0].response.status', 301);
+        assert.deepPropertyVal(har, 'log.entries[0].response.redirectURL', 'http://[::1]:3000/');
+      });
+  });
+
+  it('redirect should add trailing slash if not specified in location header', function () {
+    return utils.mockServer(3000, (req, res) => {
+      res.statusCode = 301;
+      res.setHeader('location', 'http://localhost:3000');
+      res.end();
+    })
+      .then(() => captureHar({
+        url: 'http://localhost:3000',
+        followRedirect: true,
+        maxRedirects: 1
+      }))
+      .then(har => {
+        assert.deepPropertyVal(har, 'log.entries[0].response.status', 301);
+        assert.deepPropertyVal(har, 'log.entries[0].response.redirectURL', 'http://localhost:3000/');
+      });
+  });
+
+  it('redirect should resolve relative URLs', function () {
+    return utils.mockServer(3000, (req, res) => {
+      res.statusCode = 301;
+      res.setHeader('location', '../../../../');
+      res.end();
+    })
+      .then(() => captureHar({
+        url: 'http://localhost:3000',
+        followRedirect: true,
+        maxRedirects: 1
+      }))
+      .then(har => {
+        assert.deepPropertyVal(har, 'log.entries[0].response.status', 301);
+        assert.deepPropertyVal(har, 'log.entries[0].response.redirectURL', 'http://localhost:3000/');
       });
   });
 });

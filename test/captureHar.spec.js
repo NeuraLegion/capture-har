@@ -105,7 +105,7 @@ describe('captureHar', function () {
       });
   });
 
-  it('handles request errors', function () {
+  it('handles ENOTFOUND (DNS level error)', function () {
     return captureHar({ url: 'http://x' })
       .then(har => {
         assert.deepPropertyVal(har, 'log.entries[0].request.method', 'GET');
@@ -116,6 +116,152 @@ describe('captureHar', function () {
         assert.deepPropertyVal(har, 'log.entries[0].response._error.message', 'getaddrinfo ENOTFOUND x x:80');
         assert.notDeepProperty(har, 'log.entries[0].response._error.stack');
         assert.deepPropertyVal(har, 'log.entries[0].response.content.mimeType', 'x-unknown');
+      });
+  });
+
+  it('handles ECONNRESET (TCP level error)', function () {
+    return utils.mockServer(3000, (req, res) => {
+      req.socket.end();
+    })
+      .then(() => captureHar({
+        url: 'http://localhost:3000'
+      }))
+      .then(har => {
+        assert.deepPropertyVal(har, 'log.entries[0].response.status', 0);
+        assert.deepPropertyVal(har, 'log.entries[0].response._error.code', 'ECONNRESET');
+        assert.deepPropertyVal(har, 'log.entries[0].response._error.message', 'socket hang up');
+        assert.deepPropertyVal(har, 'log.entries[0].response.content.mimeType', 'x-unknown');
+      });
+  });
+
+  it('handles missing certificate (TLS level error)', function () {
+    return utils.mockServer(3000, (req, res) => {
+      res.writeHead(200, { 'content-type': 'text/plain' });
+      res.end('hello');
+    }, 'https')
+      .then(() => captureHar({
+        url: 'https://localhost:3000'
+      }))
+      .then(har => {
+        assert.deepPropertyVal(har, 'log.entries[0].response.status', 0);
+        assert.deepPropertyVal(har, 'log.entries[0].response._error.code', 'EPROTO');
+        assert.deepProperty(har, 'log.entries[0].response._error.message');
+        assert.deepPropertyVal(har, 'log.entries[0].response.content.mimeType', 'x-unknown');
+      });
+  });
+
+  it('handles invalid HTTP (HTTP parser level error)', function () {
+    return utils.mockServer(3000, (req, res) => {
+      req.socket.end('invalid');
+    })
+      .then(() => captureHar({
+        url: 'http://localhost:3000'
+      }))
+      .then(har => {
+        assert.deepPropertyVal(har, 'log.entries[0].response.status', 0);
+        assert.deepPropertyVal(har, 'log.entries[0].response._error.code', 'HPE_INVALID_CONSTANT');
+        assert.deepPropertyVal(har, 'log.entries[0].response._error.message', 'Parse Error');
+        assert.deepPropertyVal(har, 'log.entries[0].response.content.mimeType', 'x-unknown');
+      });
+  });
+
+  it('handles invalid HTTP (GZIP level error)', function () {
+    return utils.mockServer(3000, (req, res) => {
+      res.writeHead(
+        200, {
+          'content-encoding': 'gzip',
+          'content-type': 'text/plain'
+        }
+      );
+      res.end('invalid');
+    })
+      .then(() => captureHar({
+        url: 'http://localhost:3000',
+        gzip: true
+      }))
+      .then(har => {
+        assert.deepPropertyVal(har, 'log.entries[0].response.status', 0);
+        assert.deepPropertyVal(har, 'log.entries[0].response._error.code', 'Z_DATA_ERROR');
+        assert.deepPropertyVal(har, 'log.entries[0].response._error.message', 'incorrect header check');
+        assert.deepPropertyVal(har, 'log.entries[0].response.content.mimeType', 'x-unknown');
+      });
+  });
+
+  it('handles invalid JSON data (JSON level error)', function () {
+    return utils.mockServer(3000, (req, res) => {
+      res.writeHead(
+        200, {
+          'content-type': 'application/json'
+        }
+      );
+      res.end('invalid');
+    })
+      .then(() => captureHar({
+        url: 'http://localhost:3000',
+        json: true
+      }))
+      .then(har => {
+        assert.deepPropertyVal(har, 'log.entries[0].response.status', 200);
+        assert.deepPropertyVal(har, 'log.entries[0].response.content.mimeType', 'application/json');
+        assert.deepPropertyVal(har, 'log.entries[0].response.content.text', 'invalid');
+      });
+  });
+
+  it('handles valid JSON data (JSON level error)', function () {
+    return utils.mockServer(3000, (req, res) => {
+      res.writeHead(
+        200, {
+          'content-type': 'application/json'
+        }
+      );
+      res.end('{"hello":"world"}');
+    })
+      .then(() => captureHar({
+        url: 'http://localhost:3000',
+        json: true
+      }))
+      .then(har => {
+        assert.deepPropertyVal(har, 'log.entries[0].response.status', 200);
+        assert.deepPropertyVal(har, 'log.entries[0].response.content.mimeType', 'application/json');
+        assert.deepPropertyVal(har, 'log.entries[0].response.content.text', '{"hello":"world"}');
+      });
+  });
+
+  it('handles valid binary data (Buffer level error)', function () {
+    return utils.mockServer(3000, (req, res) => {
+      res.writeHead(
+        200, {
+          'content-type': 'text/plain'
+        }
+      );
+      res.end(new Buffer([ 1, 2, 3, 4 ]));
+    })
+      .then(() => captureHar({
+        url: 'http://localhost:3000',
+        encoding: null
+      }))
+      .then(har => {
+        assert.deepPropertyVal(har, 'log.entries[0].response.status', 200);
+        assert.deepPropertyVal(har, 'log.entries[0].response.content.mimeType', 'text/plain');
+        assert.deepPropertyVal(har, 'log.entries[0].response.content.size', 4);
+        assert.deepPropertyVal(har, 'log.entries[0].response.content.text', '\u0001\u0002\u0003\u0004');
+      });
+  });
+
+  it('handles HTTP version differences', function () {
+    return utils.mockServer(3000, (req, res) => {
+      req.socket.end('HTTP/0.9 200 OK\r\n\r\n');
+    })
+      .then(() => captureHar({
+        url: 'http://localhost:3000',
+        headers: {
+          Host: 'localhost:3000'
+        }
+      }))
+      .then(har => {
+        assert.deepPropertyVal(har, 'log.entries[0].request.httpVersion', 'HTTP/1.1');
+
+        assert.deepPropertyVal(har, 'log.entries[0].response.httpVersion', 'HTTP/0.9');
       });
   });
 
@@ -130,7 +276,22 @@ describe('captureHar', function () {
       });
   });
 
-  it('can ignore body content', function () {
+  it('handles request body for plain text content', function () {
+    return utils.mockServer(3000, (req, res) => res.end())
+      .then(() => captureHar({
+        url: 'http://localhost:3000',
+        body: 'test',
+        headers: {
+          'content-type': 'text/plain'
+        }
+      }))
+      .then(har => {
+        assert.deepPropertyVal(har, 'log.entries[0].request.postData.mimeType', 'text/plain');
+        assert.deepPropertyVal(har, 'log.entries[0].request.postData.text', 'test');
+      });
+  });
+
+  it('', function () {
     return utils.mockServer(3000, (req, res) => res.end('hello'))
       .then(() => captureHar({ url: 'http://localhost:3000' }, { withContent: false }))
       .then(har => {
@@ -236,6 +397,37 @@ describe('captureHar', function () {
       .then(() => captureHar({ url: 'http://localhost:3000' }))
       .then(har => {
         assert.deepPropertyVal(har, 'log.entries[0].response.content.mimeType', 'x-unknown');
+      });
+  });
+
+  it('normalizes url path if not specified', function () {
+    return utils.mockServer(3000, (req, res) => {
+      res.statusCode = 200;
+      res.end();
+    })
+      .then(() => captureHar({
+        url: 'http://127.0.0.1:3000'
+      }))
+      .then(har => {
+        assert.deepPropertyVal(har, 'log.entries[0].request.url', 'http://127.0.0.1:3000/');
+      });
+  });
+
+  it('doesn\'t break when url host and host header value differ', function () {
+    return utils.mockServer(3000, (req, res) => {
+      res.statusCode = 200;
+      res.end();
+    })
+      .then(() => captureHar({
+        url: 'http://127.0.0.1:3000',
+        headers: {
+          Host: 'localhost:3000'
+        }
+      }))
+      .then(har => {
+        assert.deepPropertyVal(har, 'log.entries[0].request.url', 'http://127.0.0.1:3000/');
+        assert.deepPropertyVal(har, 'log.entries[0].request.headers[0].name', 'host');
+        assert.deepPropertyVal(har, 'log.entries[0].request.headers[0].value', 'localhost:3000');
       });
   });
 });

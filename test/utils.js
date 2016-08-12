@@ -1,4 +1,10 @@
+var https = require('https');
 var http = require('http');
+
+var protocols = {
+  https,
+  http
+};
 
 function log (har) {
   console.log(require('util').inspect(har, {
@@ -8,9 +14,9 @@ function log (har) {
 }
 
 var mocks = [];
-function mockServer (port, handler) {
+function mockServer (port, handler, protocol = 'http') {
   var mock = new Promise((resolve, reject) => {
-    var app = http.createServer(handler);
+    var app = protocols[protocol].createServer(handler);
     var server = app.listen(port, err => {
       if (err) {
         reject(err);
