@@ -5,7 +5,7 @@ var captureHar = require('./captureHar');
 var lolex = require('lolex');
 var utils = require('./utils');
 
-describe('redirect express', function () {
+describe('redirect', function () {
   afterEach(function () {
     if (this.clock) {
       this.clock.uninstall();
