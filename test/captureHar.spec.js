@@ -134,6 +134,14 @@ describe('captureHar', function () {
       });
   });
 
+  it('can timeout', function () {
+    return utils.mockServer(3000, (req, res) => null)
+      .then(() => captureHar({ url: 'http://localhost:3000', timeout: 100 }))
+      .then(har => {
+        assert.deepPropertyVal(har, 'log.entries[0].response._error.code', 'ETIMEDOUT');
+      });
+  });
+
   it('handles missing certificate (TLS level error)', function () {
     return utils.mockServer(3000, (req, res) => {
       res.writeHead(200, { 'content-type': 'text/plain' });
@@ -291,7 +299,7 @@ describe('captureHar', function () {
       });
   });
 
-  it('', function () {
+  it('shouldn\'t put the full body when captured with withContent: false', function () {
     return utils.mockServer(3000, (req, res) => res.end('hello'))
       .then(() => captureHar({ url: 'http://localhost:3000' }, { withContent: false }))
       .then(har => {
