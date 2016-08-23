@@ -5,6 +5,7 @@ var captureHar = require('./captureHar');
 var lolex = require('lolex');
 var utils = require('./utils');
 var urlUtil = require('url');
+var dns = require('dns');
 
 describe('captureHar', function () {
   afterEach(function () {
@@ -34,6 +35,7 @@ describe('captureHar', function () {
         assert.deepPropertyVal(har, 'log.entries[0].response.content.size', 4);
         assert.deepPropertyVal(har, 'log.entries[0].response.content.mimeType', 'x-unknown');
         assert.deepPropertyVal(har, 'log.entries[0].response.content.text', 'body');
+        assert.deepPropertyVal(har, 'log.entries[0].response._remoteAddress', '127.0.0.1');
       });
   });
 
@@ -405,6 +407,21 @@ describe('captureHar', function () {
       .then(() => captureHar({ url: 'http://localhost:3000' }))
       .then(har => {
         assert.deepPropertyVal(har, 'log.entries[0].response.content.mimeType', 'x-unknown');
+      });
+  });
+
+  it('passes through custom dns lookup', function () {
+    var called = false;
+    return utils.mockServer(3000, (req, res) => res.end())
+      .then(() => captureHar({
+        url: 'http://localhost:3000',
+        lookup (host, options, cb) {
+          called = true;
+          return dns.lookup(host, options, cb);
+        }
+      }))
+      .then(har => {
+        assert.ok(called);
       });
   });
 
