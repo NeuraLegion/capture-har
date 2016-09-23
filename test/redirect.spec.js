@@ -4,6 +4,7 @@ var assert = require('chai').assert;
 var captureHar = require('./captureHar');
 var lolex = require('lolex');
 var utils = require('./utils');
+var net = require('net');
 
 describe('redirect', function () {
   afterEach(function () {
@@ -241,6 +242,16 @@ describe('redirect', function () {
       .then(har => {
         assert.deepPropertyVal(har, 'log.entries[0].response.status', 301);
         assert.deepPropertyVal(har, 'log.entries[0].response.redirectURL', 'http://localhost:3000/');
+      });
+  });
+
+  it('should have remoteAddress after redirect', function () {
+    return captureHar({
+      url: 'http://woorank.com',
+      followRedirect: true
+    })
+      .then(har => {
+        assert(net.isIP(har.log.entries[1].response._remoteAddress));
       });
   });
 });
