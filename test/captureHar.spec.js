@@ -455,4 +455,17 @@ describe('captureHar', function () {
         assert.deepPropertyVal(har, 'log.entries[0].request.headers[0].value', 'localhost:3000');
       });
   });
+
+  it('detects ip address when fetch by ip', function () {
+    return utils.mockServer(3000, (req, res) => {
+      res.statusCode = 200;
+      res.end();
+    })
+      .then(() => captureHar({
+        url: 'http://127.0.0.1:3000'
+      }))
+      .then(har => {
+        assert.deepPropertyVal(har, 'log.entries[0].response._remoteAddress', '127.0.0.1');
+      });
+  });
 });
