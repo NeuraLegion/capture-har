@@ -311,9 +311,9 @@ describe('captureHar', function () {
       });
   });
 
-  it('shouldn\'t truncate body when superior to truncateAfter and captured with withContent: false, truncateAfter: 4', function () {
+  it('shouldn\'t truncate body when superior to maxContentLength and captured with withContent: false, maxContentLength: 4', function () {
     return utils.mockServer(3000, (req, res) => res.end(Buffer.alloc(6)))
-      .then(() => captureHar({ url: 'http://localhost:3000' }, { withContent: false, truncateAfter: 4 }))
+      .then(() => captureHar({ url: 'http://localhost:3000' }, { withContent: false, maxContentLength: 4 }))
       .then(har => {
         assert.deepPropertyVal(har, 'log.entries[0].response.content.size', 6);
         assert.deepPropertyVal(har, 'log.entries[0].response.content.mimeType', 'x-unknown');
@@ -321,9 +321,9 @@ describe('captureHar', function () {
       });
   });
 
-  it('should truncate body when superior to truncateAfter and captured with truncateAfter set', function () {
+  it('should truncate body when superior to maxContentLength and captured with maxContentLength set', function () {
     return utils.mockServer(3000, (req, res) => res.end(Buffer.alloc(6)))
-      .then(() => captureHar({ url: 'http://localhost:3000' }, { truncateAfter: 4 }))
+      .then(() => captureHar({ url: 'http://localhost:3000' }, { maxContentLength: 4 }))
       .then(har => {
         assert.deepPropertyVal(har, 'log.entries[0].response._error.message', 'Maximum response size exceeded');
         assert.deepPropertyVal(har, 'log.entries[0].response._error.code', 'TRUNCATED');
@@ -331,9 +331,9 @@ describe('captureHar', function () {
       });
   });
 
-  it('shouldn\'t truncate body when inferior to truncateAfter and captured with truncateAfter set', function () {
+  it('shouldn\'t truncate body when inferior to maxContentLength and captured with maxContentLength set', function () {
     return utils.mockServer(3000, (req, res) => res.end(Buffer.alloc(2)))
-      .then(() => captureHar({ url: 'http://localhost:3000' }, { truncateAfter: 4 }))
+      .then(() => captureHar({ url: 'http://localhost:3000' }, { maxContentLength: 4 }))
       .then(har => {
         assert.deepPropertyVal(har, 'log.entries[0].response.content.size', 2);
         assert.deepPropertyVal(har, 'log.entries[0].response.content.mimeType', 'x-unknown');
