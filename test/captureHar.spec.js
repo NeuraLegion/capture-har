@@ -140,7 +140,7 @@ describe('captureHar', function () {
     return utils.mockServer(3000, (req, res) => null)
       .then(() => captureHar({ url: 'http://localhost:3000', timeout: 100 }))
       .then(har => {
-        assert.deepPropertyVal(har, 'log.entries[0].response._error.code', 'ETIMEDOUT');
+        assert.deepPropertyVal(har, 'log.entries[0].response._error.code', 'ESOCKETTIMEDOUT');
       });
   });
 
@@ -308,6 +308,62 @@ describe('captureHar', function () {
         assert.deepPropertyVal(har, 'log.entries[0].response.content.size', 5);
         assert.deepPropertyVal(har, 'log.entries[0].response.content.mimeType', 'x-unknown');
         assert.notDeepProperty(har, 'log.entries[0].response.content.text');
+      });
+  });
+
+  it('shouldn\'t truncate body when superior to maxContentLength and captured with withContent: false, maxContentLength: 4', function () {
+    return utils.mockServer(3000, (req, res) => res.end(Buffer.alloc(6)))
+      .then(() => captureHar({ url: 'http://localhost:3000' }, { withContent: false, maxContentLength: 4 }))
+      .then(har => {
+        assert.deepPropertyVal(har, 'log.entries[0].response.content.size', 6);
+        assert.deepPropertyVal(har, 'log.entries[0].response.content.mimeType', 'x-unknown');
+        assert.notDeepProperty(har, 'log.entries[0].response.content.text');
+      });
+  });
+
+  it('should truncate body when superior to maxContentLength and captured with maxContentLength set', function () {
+    return utils.mockServer(3000, (req, res) => res.end(Buffer.alloc(6)))
+      .then(() => captureHar({ url: 'http://localhost:3000' }, { maxContentLength: 4 }))
+      .then(har => {
+        assert.deepPropertyVal(har, 'log.entries[0].response._error.message', 'Maximum response size exceeded');
+        assert.deepPropertyVal(har, 'log.entries[0].response._error.code', 'MAX_RES_BODY_SIZE');
+        assert.notDeepProperty(har, 'log.entries[0].response.content.text');
+      });
+  });
+
+  it('shouldn\'t truncate body when inferior to maxContentLength and captured with maxContentLength set', function () {
+    return utils.mockServer(3000, (req, res) => res.end(Buffer.alloc(2)))
+      .then(() => captureHar({ url: 'http://localhost:3000' }, { maxContentLength: 4 }))
+      .then(har => {
+        assert.deepPropertyVal(har, 'log.entries[0].response.content.size', 2);
+        assert.deepPropertyVal(har, 'log.entries[0].response.content.mimeType', 'x-unknown');
+        assert.strictEqual(Buffer.from(har.log.entries[0].response.content.text, 'utf8').length, 2);
+      });
+  });
+
+  it('should truncate when Content-Length superior to maxContentLength and captured with maxContentLength set', function () {
+    return utils.mockServer(3000, (req, res) => {
+      res.setHeader('Content-Length', 6);
+      res.end(Buffer.alloc(1));
+    })
+      .then(() => captureHar({ url: 'http://localhost:3000' }, { maxContentLength: 4 }))
+      .then(har => {
+        assert.deepPropertyVal(har, 'log.entries[0].response._error.message', 'Maximum response size exceeded');
+        assert.deepPropertyVal(har, 'log.entries[0].response._error.code', 'MAX_RES_BODY_SIZE');
+        assert.notDeepProperty(har, 'log.entries[0].response.content.text');
+      });
+  });
+
+  it('shouldn\'t truncate when Content-Length inferior to maxContentLength and captured with maxContentLength set', function () {
+    return utils.mockServer(3000, (req, res) => {
+      res.setHeader('Content-Length', 2);
+      res.end(Buffer.alloc(1));
+    })
+      .then(() => captureHar({ url: 'http://localhost:3000' }, { maxContentLength: 4 }))
+      .then(har => {
+        assert.deepPropertyVal(har, 'log.entries[0].response.content.size', 1);
+        assert.deepPropertyVal(har, 'log.entries[0].response.content.mimeType', 'x-unknown');
+        assert.strictEqual(Buffer.from(har.log.entries[0].response.content.text, 'utf8').length, 1);
       });
   });
 

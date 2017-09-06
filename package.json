@@ -1,13 +1,12 @@
 {
   "name": "capture-har",
-  "version": "0.3.2",
+  "version": "0.4.0",
   "description": "",
   "main": "lib",
   "scripts": {
-    "test": "npm run security && npm run lint && nyc npm run mocha",
+    "test": " npm run lint && nyc npm run mocha",
     "lint": "semistandard | snazzy",
     "mocha": "mocha ./test",
-    "security": "snyk test .",
     "watch:mocha": "mocha -w ./test"
   },
   "repository": {
@@ -35,8 +34,7 @@
     "mocha": "^3.0.2",
     "nyc": "^7.1.0",
     "semistandard": "^8.0.0",
-    "snazzy": "^4.0.1",
-    "snyk": "^1.18.0"
+    "snazzy": "^4.0.1"
   },
   "dependencies": {
     "content-type": "^1.0.2",
