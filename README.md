@@ -43,4 +43,5 @@ Defaults to `true`. Specifies whether the response content object should contain
 
 ##### `maxContentLength`
 
-Defaults to `Infinity`. Limits the response content to a maximum byte size.
+Defaults to `Infinity`. Limits the response body to a maximum byte size.
+If the response body is larger than the specified limit, the content text won't exist and an error will be returned for this entity with the code `MAX_RES_BODY_SIZE`.

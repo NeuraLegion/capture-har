@@ -326,7 +326,7 @@ describe('captureHar', function () {
       .then(() => captureHar({ url: 'http://localhost:3000' }, { maxContentLength: 4 }))
       .then(har => {
         assert.deepPropertyVal(har, 'log.entries[0].response._error.message', 'Maximum response size exceeded');
-        assert.deepPropertyVal(har, 'log.entries[0].response._error.code', 'TRUNCATED');
+        assert.deepPropertyVal(har, 'log.entries[0].response._error.code', 'MAX_RES_BODY_SIZE');
         assert.notDeepProperty(har, 'log.entries[0].response.content.text');
       });
   });
@@ -349,7 +349,7 @@ describe('captureHar', function () {
       .then(() => captureHar({ url: 'http://localhost:3000' }, { maxContentLength: 4 }))
       .then(har => {
         assert.deepPropertyVal(har, 'log.entries[0].response._error.message', 'Maximum response size exceeded');
-        assert.deepPropertyVal(har, 'log.entries[0].response._error.code', 'TRUNCATED');
+        assert.deepPropertyVal(har, 'log.entries[0].response._error.code', 'MAX_RES_BODY_SIZE');
         assert.notDeepProperty(har, 'log.entries[0].response.content.text');
       });
   });
