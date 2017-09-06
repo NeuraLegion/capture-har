@@ -140,7 +140,7 @@ describe('captureHar', function () {
     return utils.mockServer(3000, (req, res) => null)
       .then(() => captureHar({ url: 'http://localhost:3000', timeout: 100 }))
       .then(har => {
-        assert.deepPropertyVal(har, 'log.entries[0].response._error.code', 'ETIMEDOUT');
+        assert.deepPropertyVal(har, 'log.entries[0].response._error.code', 'ESOCKETTIMEDOUT');
       });
   });
 
@@ -308,6 +308,36 @@ describe('captureHar', function () {
         assert.deepPropertyVal(har, 'log.entries[0].response.content.size', 5);
         assert.deepPropertyVal(har, 'log.entries[0].response.content.mimeType', 'x-unknown');
         assert.notDeepProperty(har, 'log.entries[0].response.content.text');
+      });
+  });
+
+  it('shouldn\'t truncate body when superior to truncateAfter and captured with withContent: false, truncateAfter: 4', function () {
+    return utils.mockServer(3000, (req, res) => res.end(Buffer.alloc(6)))
+      .then(() => captureHar({ url: 'http://localhost:3000' }, { withContent: false, truncateAfter: 4 }))
+      .then(har => {
+        assert.deepPropertyVal(har, 'log.entries[0].response.content.size', 6);
+        assert.deepPropertyVal(har, 'log.entries[0].response.content.mimeType', 'x-unknown');
+        assert.notDeepProperty(har, 'log.entries[0].response.content.text');
+      });
+  });
+
+  it('should truncate body when superior to truncateAfter and captured with truncateAfter set', function () {
+    return utils.mockServer(3000, (req, res) => res.end(Buffer.alloc(6)))
+      .then(() => captureHar({ url: 'http://localhost:3000' }, { truncateAfter: 4 }))
+      .then(har => {
+        assert.deepPropertyVal(har, 'log.entries[0].response._error.message', 'Maximum response size exceeded');
+        assert.deepPropertyVal(har, 'log.entries[0].response._error.code', 'TRUNCATED');
+        assert.notDeepProperty(har, 'log.entries[0].response.content.text');
+      });
+  });
+
+  it('shouldn\'t truncate body when inferior to truncateAfter and captured with truncateAfter set', function () {
+    return utils.mockServer(3000, (req, res) => res.end(Buffer.alloc(2)))
+      .then(() => captureHar({ url: 'http://localhost:3000' }, { truncateAfter: 4 }))
+      .then(har => {
+        assert.deepPropertyVal(har, 'log.entries[0].response.content.size', 2);
+        assert.deepPropertyVal(har, 'log.entries[0].response.content.mimeType', 'x-unknown');
+        assert.strictEqual(Buffer.from(har.log.entries[0].response.content.text, 'utf8').length, 2);
       });
   });
 
