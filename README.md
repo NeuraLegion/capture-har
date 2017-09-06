@@ -40,3 +40,7 @@ Optional configuration for the resulting HAR object.
 ##### `withContent`
 
 Defaults to `true`. Specifies whether the response content object should contain the full body of the response.
+
+##### `maxContentLength`
+
+Defaults to `Infinity`. Limits the response content to a maximum byte size.
