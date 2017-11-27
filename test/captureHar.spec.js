@@ -144,6 +144,43 @@ describe('captureHar', function () {
       });
   });
 
+  it('converts HTTP header values from ASCII to UTF-8 (to handle edge-cases)', function () {
+    return Promise.all([
+      utils.mockServer(3000, (req, res) => {
+        res.socket.end([
+          'HTTP/1.1 301 Moved Permanently',
+          'Location: http://localhost:3001/fÖÖbÃÃr',
+          '\r\n'
+        ].join('\r\n'));
+      }),
+      utils.mockServer(3001, (req, res) => {
+        res.writeHead(301, { 'location': 'http://localhost:3002/b%C3%83%C3%83rf%C3%96%C3%96' });
+        res.end();
+      }),
+      utils.mockServer(3002, (req, res) => {
+        res.end();
+      })
+    ])
+      .then(() => captureHar({
+        url: 'http://localhost:3000'
+      }))
+      .then(har => {
+        assert.deepPropertyVal(har, 'log.entries[0].response.status', 301);
+        assert.deepPropertyVal(har, 'log.entries[0].response.headers[0].name', 'location');
+        assert.deepPropertyVal(har, 'log.entries[0].response.headers[0].value', 'http://localhost:3001/fÖÖbÃÃr');
+        assert.deepPropertyVal(har, 'log.entries[0].response.redirectURL', 'http://localhost:3001/fÖÖbÃÃr');
+
+        assert.deepPropertyVal(har, 'log.entries[1].request.url', 'http://localhost:3001/fÖÖbÃÃr');
+        assert.deepPropertyVal(har, 'log.entries[1].response.status', 301);
+        assert.deepPropertyVal(har, 'log.entries[1].response.headers[0].name', 'location');
+        assert.deepPropertyVal(har, 'log.entries[1].response.headers[0].value', 'http://localhost:3002/b%C3%83%C3%83rf%C3%96%C3%96');
+        assert.deepPropertyVal(har, 'log.entries[1].response.redirectURL', 'http://localhost:3002/b%C3%83%C3%83rf%C3%96%C3%96');
+
+        assert.deepPropertyVal(har, 'log.entries[2].request.url', 'http://localhost:3002/b%C3%83%C3%83rf%C3%96%C3%96');
+        assert.deepPropertyVal(har, 'log.entries[2].response.status', 200);
+      });
+  });
+
   it('handles missing certificate (TLS level error)', function () {
     return utils.mockServer(3000, (req, res) => {
       res.writeHead(200, { 'content-type': 'text/plain' });
