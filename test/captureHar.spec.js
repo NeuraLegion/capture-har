@@ -144,7 +144,7 @@ describe('captureHar', function () {
       });
   });
 
-  it.only('converts HTTP header values from ASCII to UTF-8 (to handle edge-cases)', function () {
+  it('converts HTTP header values from ASCII to UTF-8 (to handle edge-cases)', function () {
     return Promise.all([
       utils.mockServer(3000, (req, res) => {
         res.socket.end([
