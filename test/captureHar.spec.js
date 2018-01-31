@@ -339,6 +339,66 @@ describe('captureHar', function () {
       });
   });
 
+  it('should calculate size based on byte size with body type: string, withContent: true', function () {
+    return utils.mockServer(3000, (req, res) => res.end('ùùù'))
+      .then(() => captureHar({ url: 'http://localhost:3000' }, { withContent: true, encoding: 'utf8' }))
+      .then(har => {
+        assert.deepPropertyVal(har, 'log.entries[0].response.content.size', 6);
+        assert.deepPropertyVal(har, 'log.entries[0].response.content.mimeType', 'x-unknown');
+        assert.deepPropertyVal(har, 'log.entries[0].response.content.text', 'ùùù');
+      });
+  });
+
+  it('should calculate size based on byte size with body type: buffer, withContent: true', function () {
+    return utils.mockServer(3000, (req, res) => res.end('ùùù'))
+      .then(() => captureHar({ url: 'http://localhost:3000' }, { withContent: true, encoding: null }))
+      .then(har => {
+        assert.deepPropertyVal(har, 'log.entries[0].response.content.size', 6);
+        assert.deepPropertyVal(har, 'log.entries[0].response.content.mimeType', 'x-unknown');
+        assert.deepPropertyVal(har, 'log.entries[0].response.content.text', 'ùùù');
+      });
+  });
+
+  it('should calculate size based on byte size with body type: json, withContent: true', function () {
+    return utils.mockServer(3000, (req, res) => res.end('{"ù":1}'))
+      .then(() => captureHar({ url: 'http://localhost:3000' }, { withContent: true, json: true }))
+      .then(har => {
+        assert.deepPropertyVal(har, 'log.entries[0].response.content.size', 8);
+        assert.deepPropertyVal(har, 'log.entries[0].response.content.mimeType', 'x-unknown');
+        assert.deepPropertyVal(har, 'log.entries[0].response.content.text', '{"ù":1}');
+      });
+  });
+
+  it('should calculate size based on byte size with body type: string, withContent: false', function () {
+    return utils.mockServer(3000, (req, res) => res.end('ùùù'))
+      .then(() => captureHar({ url: 'http://localhost:3000' }, { withContent: false, encoding: 'utf8' }))
+      .then(har => {
+        assert.deepPropertyVal(har, 'log.entries[0].response.content.size', 6);
+        assert.deepPropertyVal(har, 'log.entries[0].response.content.mimeType', 'x-unknown');
+        assert.notDeepProperty(har, 'log.entries[0].response.content.text');
+      });
+  });
+
+  it('should calculate size based on byte size with body type: buffer, withContent: false', function () {
+    return utils.mockServer(3000, (req, res) => res.end('ùùù'))
+      .then(() => captureHar({ url: 'http://localhost:3000' }, { withContent: false, encoding: null }))
+      .then(har => {
+        assert.deepPropertyVal(har, 'log.entries[0].response.content.size', 6);
+        assert.deepPropertyVal(har, 'log.entries[0].response.content.mimeType', 'x-unknown');
+        assert.notDeepProperty(har, 'log.entries[0].response.content.text');
+      });
+  });
+
+  it('should calculate size based on byte size with body type: json, withContent: true', function () {
+    return utils.mockServer(3000, (req, res) => res.end('{"ù":1}'))
+      .then(() => captureHar({ url: 'http://localhost:3000' }, { withContent: false, json: true }))
+      .then(har => {
+        assert.deepPropertyVal(har, 'log.entries[0].response.content.size', 8);
+        assert.deepPropertyVal(har, 'log.entries[0].response.content.mimeType', 'x-unknown');
+        assert.notDeepProperty(har, 'log.entries[0].response.content.text');
+      });
+  });
+
   it('shouldn\'t truncate body when superior to maxContentLength and captured with withContent: false, maxContentLength: 4', function () {
     return utils.mockServer(3000, (req, res) => res.end(Buffer.alloc(6)))
       .then(() => captureHar({ url: 'http://localhost:3000' }, { withContent: false, maxContentLength: 4 }))
