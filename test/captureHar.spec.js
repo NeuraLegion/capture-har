@@ -282,7 +282,8 @@ describe('captureHar', function () {
         assert.deepPropertyVal(har, 'log.entries[0].response.status', 200);
         assert.deepPropertyVal(har, 'log.entries[0].response.content.mimeType', 'text/plain');
         assert.deepPropertyVal(har, 'log.entries[0].response.content.size', 4);
-        assert.deepPropertyVal(har, 'log.entries[0].response.content.text', '\u0001\u0002\u0003\u0004');
+        assert.deepPropertyVal(har, 'log.entries[0].response.content.text', 'AQIDBA==');
+        assert.deepPropertyVal(har, 'log.entries[0].response.content.encoding', 'base64');
       });
   });
 
