@@ -140,7 +140,7 @@ describe('captureHar', function () {
     return utils.mockServer(3000, (req, res) => null)
       .then(() => captureHar({ url: 'http://localhost:3000', timeout: 100 }))
       .then(har => {
-        assert.deepPropertyVal(har, 'log.entries[0].response._error.code', 'ESOCKETTIMEDOUT');
+        assert.deepPropertyVal(har, 'log.entries[0].response._error.code', 'ETIMEDOUT');
       });
   });
 
