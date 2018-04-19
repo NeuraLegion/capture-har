@@ -8,7 +8,7 @@ const utils = require('./utils');
 const urlUtil = require('url');
 const dns = require('dns');
 
-describe('captureHarStream', () => {
+describe('captureHar end event', () => {
   afterEach(() => {
     if (this.clock) {
       this.clock.uninstall();
@@ -27,7 +27,6 @@ describe('captureHarStream', () => {
         captureHar.start({ url: 'http://localhost:3000' })
           .on('end', () => {
             const har = captureHar.stop();
-            // console.log('har: ', har.log.entries[0].response.content);
             assert.deepPropertyVal(har, 'log.entries[0].startedDateTime', '2010-01-01T00:00:00.000Z');
             assert.deepPropertyVal(har, 'log.entries[0].time', 120);
 
@@ -161,7 +160,6 @@ describe('captureHarStream', () => {
         captureHar.start({ url: 'http://localhost:3000' })
           .on('end', () => {
             const har = captureHar.stop();
-            // console.log('har: ', har.log.entries[0]);
             assert.deepPropertyVal(har, 'log.entries[0].response.status', 0);
             assert.deepPropertyVal(har, 'log.entries[0].response._error.code', 'ECONNRESET');
             assert.deepPropertyVal(har, 'log.entries[0].response._error.message', 'socket hang up');
@@ -202,8 +200,6 @@ describe('captureHarStream', () => {
         captureHar.start({ url: 'http://localhost:3000/bÃÃrfÖÖ' })
           .on('end', () => {
             const har = captureHar.stop();
-            // console.log('har0: ', har.log.entries[0]);
-            // console.log('har1: ', har.log.entries[1]);
             assert.deepPropertyVal(har, 'log.entries[0].request.url', 'http://localhost:3000/bÃÃrfÖÖ');
             assert.deepPropertyVal(har, 'log.entries[0].response.status', 301);
             assert.deepPropertyVal(har, 'log.entries[0].response.headers[0].name', 'location');
@@ -250,7 +246,6 @@ describe('captureHarStream', () => {
         captureHar.start({ url: 'http://localhost:3000', gzip: true })
           .on('end', () => {
             const har = captureHar.stop();
-            // console.log('har: ', har.log.entries[0].response);
             assert.deepPropertyVal(har, 'log.entries[0].response.status', 0);
             assert.deepPropertyVal(har, 'log.entries[0].response._error.code', 'Z_DATA_ERROR');
             assert.deepPropertyVal(har, 'log.entries[0].response._error.message', 'incorrect header check');
@@ -274,7 +269,6 @@ describe('captureHarStream', () => {
         captureHar.start({ url: 'http://localhost:3000', json: true })
           .on('end', () => {
             const har = captureHar.stop();
-            // console.log('har: ', har.log.entries[0].response.content);
             assert.deepPropertyVal(har, 'log.entries[0].response.status', 200);
             assert.deepPropertyVal(har, 'log.entries[0].response.content.mimeType', 'application/json');
             assert.deepPropertyVal(har, 'log.entries[0].response.content.text', 'invalid');
@@ -320,7 +314,6 @@ describe('captureHarStream', () => {
         captureHar.start({ url: 'http://localhost:3000', encoding: null })
           .on('end', () => {
             const har = captureHar.stop();
-            // console.log('har: ', har.log.entries[0].response.content);
             assert.deepPropertyVal(har, 'log.entries[0].response.status', 200);
             assert.deepPropertyVal(har, 'log.entries[0].response.content.mimeType', 'text/plain');
             assert.deepPropertyVal(har, 'log.entries[0].response.content.size', 4);
@@ -340,7 +333,6 @@ describe('captureHarStream', () => {
         captureHar.start({ url: 'http://localhost:3000', headers: { Host: 'localhost:3000' } })
           .on('end', () => {
             const har = captureHar.stop();
-            // console.log('har: ', har.log.entries[0]);
             assert.deepPropertyVal(har, 'log.entries[0].request.httpVersion', 'HTTP/1.1');
             assert.deepPropertyVal(har, 'log.entries[0].response.httpVersion', 'HTTP/0.9');
             done();
@@ -358,7 +350,6 @@ describe('captureHarStream', () => {
         captureHar.start({ url: 'http://localhost:3000' })
           .on('end', () => {
             const har = captureHar.stop();
-            // console.log('har: ', har.log.entries[0]);
             assert.deepPropertyVal(har, 'log.entries[0].response.status', 404);
             done();
           });
@@ -372,28 +363,12 @@ describe('captureHarStream', () => {
         captureHar.start({ url: 'http://localhost:3000', body: 'test', headers: { 'content-type': 'text/plain' } })
           .on('end', () => {
             const har = captureHar.stop();
-            // console.log('har: ', har.log.entries[0]);
             assert.deepPropertyVal(har, 'log.entries[0].request.postData.mimeType', 'text/plain');
             assert.deepPropertyVal(har, 'log.entries[0].request.postData.text', 'test');
             done();
           });
       });
   });
-
-  // it('shouldn\'t capture body with withContent: false', done => {
-  //   utils.mockServer(3000, (req, res) => res.end('hello'))
-  //     .then(() => {
-  //       const captureHar = new CaptureHar(request);
-  //       captureHar.start({ url: 'http://localhost:3000' }, { withContent: false })
-  //         .on('end', () => {
-  //           const har = captureHar.stop();
-  //           assert.deepPropertyVal(har, 'log.entries[0].response.content.size', 0);
-  //           assert.deepPropertyVal(har, 'log.entries[0].response.content.mimeType', 'x-unknown');
-  //           assert.notDeepProperty(har, 'log.entries[0].response.content.text');
-  //           done();
-  //         });
-  //     });
-  // });
 
   it('shouldn\'t put the full body when captured with withContent: false', done => {
     utils.mockServer(3000, (req, res) => res.end('hello'))
@@ -417,7 +392,6 @@ describe('captureHarStream', () => {
         captureHar.start({ url: 'http://localhost:3000' }, { withContent: true, encoding: 'utf8' })
           .on('end', () => {
             const har = captureHar.stop();
-            // console.log('har: ', har.log.entries[0]);
             assert.deepPropertyVal(har, 'log.entries[0].response.content.size', 6);
             assert.deepPropertyVal(har, 'log.entries[0].response.content.mimeType', 'x-unknown');
             assert.deepPropertyVal(har, 'log.entries[0].response.content.text', 'ùùù');
@@ -433,7 +407,6 @@ describe('captureHarStream', () => {
         captureHar.start({ url: 'http://localhost:3000' }, { withContent: true, encoding: null })
           .on('end', () => {
             const har = captureHar.stop();
-            // console.log('har: ', har.log.entries[0]);
             assert.deepPropertyVal(har, 'log.entries[0].response.content.size', 6);
             assert.deepPropertyVal(har, 'log.entries[0].response.content.mimeType', 'x-unknown');
             assert.deepPropertyVal(har, 'log.entries[0].response.content.text', 'ùùù');
@@ -449,7 +422,6 @@ describe('captureHarStream', () => {
         captureHar.start({ url: 'http://localhost:3000' }, { withContent: true, json: true })
           .on('end', () => {
             const har = captureHar.stop();
-            // console.log('har: ', har.log.entries[0].response.content);
             assert.deepPropertyVal(har, 'log.entries[0].response.content.size', 8);
             assert.deepPropertyVal(har, 'log.entries[0].response.content.mimeType', 'x-unknown');
             assert.deepPropertyVal(har, 'log.entries[0].response.content.text', '{"ù":1}');
@@ -495,7 +467,6 @@ describe('captureHarStream', () => {
         captureHar.start({ url: 'http://localhost:3000' }, { withContent: false, json: true })
           .on('end', () => {
             const har = captureHar.stop();
-            // console.log('har: ', har.log.entries[0].response.content);
             assert.deepPropertyVal(har, 'log.entries[0].response.content.size', 8);
             assert.deepPropertyVal(har, 'log.entries[0].response.content.mimeType', 'x-unknown');
             assert.notDeepProperty(har, 'log.entries[0].response.content.text');
@@ -511,7 +482,6 @@ describe('captureHarStream', () => {
         captureHar.start({ url: 'http://localhost:3000' }, { withContent: false, maxContentLength: 4 })
           .on('end', () => {
             const har = captureHar.stop();
-            // console.log('har: ', har.log.entries[0].response.content);
             assert.deepPropertyVal(har, 'log.entries[0].response.content.size', 6);
             assert.deepPropertyVal(har, 'log.entries[0].response.content.mimeType', 'x-unknown');
             assert.notDeepProperty(har, 'log.entries[0].response.content.text');
@@ -772,6 +742,81 @@ describe('captureHarStream', () => {
           .on('end', () => {
             const har = captureHar.stop();
             assert.deepPropertyVal(har, 'log.entries[0].response._remoteAddress', '127.0.0.1');
+            done();
+          });
+      });
+  });
+});
+
+describe('captureHar data event', () => {
+  afterEach(() => {
+    return utils.cleanMocks();
+  });
+  it('stream data even without specifying withContent', done => {
+    utils.mockServer(3000, (req, res) => {
+      res.end('body');
+    })
+      .then(() => {
+        const receivedStream = [];
+        const captureHar = new CaptureHar(request);
+        captureHar.start({ url: 'http://localhost:3000' })
+          .on('data', data => receivedStream.push(data))
+          .on('end', () => {
+            assert.deepEqual(receivedStream.length, 1);
+            assert.deepEqual(receivedStream[0].toString(), 'body');
+            done();
+          });
+      });
+  });
+
+  it('stream data in several chunks', done => {
+    utils.mockServer(3000, (req, res) => {
+      res.write('first');
+      res.write('second');
+      res.end('end');
+    })
+      .then(() => {
+        const receivedStream = [];
+        const captureHar = new CaptureHar(request);
+        captureHar.start({ url: 'http://localhost:3000' })
+          .on('data', data => receivedStream.push(data))
+          .on('end', () => {
+            assert.deepEqual(receivedStream.length, 3);
+            done();
+          });
+      });
+  });
+
+  it('should emit apropiate encoding data', done => {
+    utils.mockServer(3000, (req, res) => res.end('ùùù'))
+      .then(() => {
+        const receivedStream = [];
+        const captureHar = new CaptureHar(request);
+        captureHar.start({ url: 'http://localhost:3000', encoding: 'utf8' })
+          .on('data', data => receivedStream.push(data))
+          .on('end', () => {
+            assert.deepEqual(receivedStream[0], 'ùùù');
+            done();
+          });
+      });
+  });
+
+  it('should emit buffer even if json is set to true', done => {
+    utils.mockServer(3000, (req, res) => {
+      res.writeHead(
+        200, {
+          'content-type': 'application/json'
+        }
+      );
+      res.end('{"hello":"world"}');
+    })
+      .then(() => {
+        const receivedStream = [];
+        const captureHar = new CaptureHar(request);
+        captureHar.start({ url: 'http://localhost:3000', json: true })
+          .on('data', data => receivedStream.push(data))
+          .on('end', () => {
+            assert.isTrue(Buffer.isBuffer(receivedStream[0]));
             done();
           });
       });

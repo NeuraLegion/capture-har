@@ -7,7 +7,7 @@ const utils = require('./utils');
 const net = require('net');
 const request = require('request');
 
-describe('redirectStream', () => {
+describe('redirect', () => {
   afterEach(() => {
     if (this.clock) {
       this.clock.uninstall();
