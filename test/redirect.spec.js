@@ -246,22 +246,12 @@ describe('redirect', function () {
   });
 
   it('should have remoteAddress after redirect', function () {
-    return utils.mockServer(3000, (req, res) => {
-      if (req.url === '/') {
-        res.statusCode = 301;
-        res.setHeader('location', '/1');
-        res.setHeader('redirect', '1');
-        res.end();
-      } else if (req.url === '/1') {
-        res.end();
-      }
+    return captureHar({
+      url: 'http://woorank.com',
+      followRedirect: true
     })
-      .then(() => captureHar({
-        url: 'http://localhost:3000',
-        followRedirect: true
-      }))
-      .then(har => {
-        assert(net.isIP(har.log.entries[1].response._remoteAddress));
-      });
-  });
+    .then(har => {
+      assert(net.isIP(har.log.entries[1].response._remoteAddress));
+    });
+  }).timeout(5000);
 });
