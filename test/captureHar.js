@@ -1,8 +1,8 @@
-var { captureHar } = require('..');
+var { captureHar: captureHarRaw } = require('..');
 var validateHar = require('har-validator').default;
 
-function captureHarRaw (...args) {
-  return captureHar(...args)
+function captureHar (...args) {
+  return captureHarRaw(...args)
     .then(data => {
       return validateHar(data)
         .catch(err => {
@@ -12,4 +12,4 @@ function captureHarRaw (...args) {
     });
 }
 
-module.exports = captureHarRaw;
+module.exports = captureHar;
