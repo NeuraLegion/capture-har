@@ -40,6 +40,7 @@
   "dependencies": {
     "content-type": "^1.0.2",
     "request": "^2.74.0",
+    "request-promise": "^4.2.2",
     "through": "^2.3.8",
     "tough-cookie": "^2.3.1"
   }
