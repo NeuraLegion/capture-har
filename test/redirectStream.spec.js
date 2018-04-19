@@ -293,24 +293,12 @@ describe('redirectStream', () => {
   });
 
   it('should have remoteAddress after redirect', done => {
-    utils.mockServer(3000, (req, res) => {
-      if (req.url === '/') {
-        res.statusCode = 301;
-        res.setHeader('location', '/1');
-        res.setHeader('redirect', '1');
-        res.end();
-      } else if (req.url === '/1') {
-        res.end();
-      }
-    })
-      .then(() => {
-        const captureHar = new CaptureHar(request);
-        captureHar.start({ url: 'http://localhost:3000', followRedirect: true })
-          .on('end', () => {
-            const har = captureHar.stop();
-            assert(net.isIP(har.log.entries[1].response._remoteAddress));
-            done();
-          });
+    const captureHar = new CaptureHar(request);
+    captureHar.start({ url: 'http://woorank.com', followRedirect: true })
+      .on('end', () => {
+        const har = captureHar.stop();
+        assert(net.isIP(har.log.entries[1].response._remoteAddress));
+        done();
       });
-  });
+  }).timeout(5000);
 });
