@@ -1,14 +1,14 @@
 /* global describe, it, afterEach */
 
 const assert = require('chai').assert;
-const { CaptureHar } = require('../lib/index');
+const CaptureHar = require('../lib/index').CaptureHar;
 const request = require('request');
 const lolex = require('lolex');
 const utils = require('./utils');
 const urlUtil = require('url');
 const dns = require('dns');
 
-describe('captureHarStream', () => {
+describe('captureHarStream end event', () => {
   afterEach(() => {
     if (this.clock) {
       this.clock.uninstall();
@@ -748,7 +748,7 @@ describe('captureHarStream', () => {
   });
 });
 
-describe('captureHar data event', () => {
+describe('captureHarStream data event', () => {
   afterEach(() => {
     return utils.cleanMocks();
   });
@@ -787,7 +787,7 @@ describe('captureHar data event', () => {
       });
   });
 
-  it('should emit apropiate encoding data', done => {
+  it('should emit apropiate encoded data', done => {
     utils.mockServer(3000, (req, res) => res.end('ùùù'))
       .then(() => {
         const receivedStream = [];

@@ -1,7 +1,7 @@
 /* global describe, it, afterEach */
 
 const assert = require('chai').assert;
-const { CaptureHar } = require('../lib/index');
+const CaptureHar = require('../lib/index').CaptureHar;
 const lolex = require('lolex');
 const utils = require('./utils');
 const net = require('net');
