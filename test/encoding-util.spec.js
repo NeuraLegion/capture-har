@@ -1,7 +1,7 @@
 /* global describe, it */
 
 var assert = require('chai').assert;
-var encodingUtil = require('../lib/encoding-util');
+var encodingUtil = require('../helpers/encoding-util');
 
 describe('encodingUtil', function () {
   it('transformBinaryToUtf8', function () {
