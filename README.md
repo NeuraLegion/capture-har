@@ -6,7 +6,7 @@ This module makes a request and captures it as a [HAR](http://www.softwareishard
 Under the covers it uses [request](https://www.npmjs.com/package/request) and just passes through all options.
 Currently only GET requests are supported although other methods will probably work. The request body might not be properly captured though.
 
-It can be now be also used in stream mode. This means that it will stream data events containing the body of the request and then at the end event, the HAR object will be accessible.
+It can now be also used in stream mode. This means that it will stream data events containing the body of the response and then at the end event, the HAR object will be accessible.
 
 ## API
 
