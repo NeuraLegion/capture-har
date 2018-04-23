@@ -6,18 +6,29 @@ This module makes a request and captures it as a [HAR](http://www.softwareishard
 Under the covers it uses [request](https://www.npmjs.com/package/request) and just passes through all options.
 Currently only GET requests are supported although other methods will probably work. The request body might not be properly captured though.
 
-[![Build Status](https://travis-ci.org/Woorank/capture-har.svg?branch=master)](https://travis-ci.org/Woorank/capture-har)
+It can be now be also used in stream mode. This means that it will stream data events containing the body of the request and then at the end event, the HAR object will be accessible.
 
 ## API
 
 ```js
-var captureHar = require('capture-har');
+// Promise mode
+const captureHar = require('capture-har');
 captureHar({
   url: 'http://www.google.com'
 }, { withContent: false })
   .then(har => {
     console.log(JSON.stringify(har, null, 2));
   });
+
+// Stream mode
+const CaptureHar = require('capture-har').CaptureHar;
+const captureHar = new CaptureHar(require('request'));
+captureHar.start({ url: 'http://www.google.com' })
+  .on('data', data => // data event will contain the response body as it is received)
+  .on('end', () => {
+    const har = captureHar.stop();
+    // har will contain the HAR object
+    })
 ```
 
 The result of code this can be found in [example.json](https://github.com/Woorank/capture-har/blob/master/example.json).
