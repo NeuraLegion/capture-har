@@ -29,7 +29,7 @@ describe('redirect', function () {
   });
 
   it('records redirects', function () {
-    this.clock = lolex.install(1262304000000);
+    this.clock = lolex.install({ now: 1262304000000 });
     return utils.mockServer(3000, (req, res) => {
       if (req.url === '/') {
         this.clock.tick(1000);
@@ -250,8 +250,8 @@ describe('redirect', function () {
       url: 'http://woorank.com',
       followRedirect: true
     })
-      .then(har => {
-        assert(net.isIP(har.log.entries[1].response._remoteAddress));
-      });
-  });
+    .then(har => {
+      assert(net.isIP(har.log.entries[1].response._remoteAddress));
+    });
+  }).timeout(5000);
 });

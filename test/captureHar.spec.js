@@ -16,7 +16,7 @@ describe('captureHar', function () {
   });
 
   it('captures simple requests', function () {
-    this.clock = lolex.install(1262304000000);
+    this.clock = lolex.install({ now: 1262304000000 });
     return utils.mockServer(3000, (req, res) => {
       this.clock.tick(120);
       res.end('body');
