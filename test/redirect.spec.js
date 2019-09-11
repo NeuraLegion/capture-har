@@ -21,7 +21,7 @@ describe('redirect', function () {
     })
       .then(() => captureHar({ url: 'http://localhost:3000' }))
       .then(har => {
-        assert.deepPropertyVal(har, 'log.entries[0].response.status', 301);
+        assert.deepPropertyVal(har, 'log.entries[0].response.status', 0);
         assert.lengthOf(har.log.entries, 1);
         assert.deepPropertyVal(har, 'log.entries[0].response._error.message', 'Missing location header');
         assert.deepPropertyVal(har, 'log.entries[0].response._error.code', 'NOLOCATION');
@@ -253,5 +253,5 @@ describe('redirect', function () {
     .then(har => {
       assert(net.isIP(har.log.entries[1].response._remoteAddress));
     });
-  }).timeout(5000);
+  }).timeout(15000);
 });

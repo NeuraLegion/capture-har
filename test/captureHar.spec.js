@@ -121,6 +121,23 @@ describe('captureHar', function () {
       });
   });
 
+  it('handles INVALID_URL error', function () {
+    return utils.mockServer(3000, (req, res) => {
+      res.socket.end([
+        'HTTP/1.1 301 Moved Permanently',
+        'Location: http://',
+        '\r\n'
+      ].join('\r\n'));
+    })
+      .then(() => captureHar({ url: 'http://localhost:3000' }))
+      .then(har => {
+        assert.deepPropertyVal(har, 'log.entries[0].response.status', 0);
+        assert.deepPropertyVal(har, 'log.entries[0].response._error.message', 'Invalid URL: http://');
+        assert.deepPropertyVal(har, 'log.entries[0].response._error.code', 'INVALID_REDIRECT_URL');
+        assert.notDeepProperty(har, 'log.entries[0].response._error.stack');
+      });
+  });
+
   it('handles ECONNRESET (TCP level error)', function () {
     return utils.mockServer(3000, (req, res) => {
       req.socket.end();
@@ -165,9 +182,9 @@ describe('captureHar', function () {
         assert.deepPropertyVal(har, 'log.entries[0].response.status', 301);
         assert.deepPropertyVal(har, 'log.entries[0].response.headers[0].name', 'location');
         assert.deepPropertyVal(har, 'log.entries[0].response.headers[0].value', 'http://localhost:3001/fÖÖbÃÃr');
-        assert.deepPropertyVal(har, 'log.entries[0].response.redirectURL', 'http://localhost:3001/fÖÖbÃÃr');
+        assert.deepPropertyVal(har, 'log.entries[0].response.redirectURL', 'http://localhost:3001/f%C3%96%C3%96b%C3%83%C3%83r');
 
-        assert.deepPropertyVal(har, 'log.entries[1].request.url', 'http://localhost:3001/fÖÖbÃÃr');
+        assert.deepPropertyVal(har, 'log.entries[1].request.url', 'http://localhost:3001/f%C3%96%C3%96b%C3%83%C3%83r');
         assert.deepPropertyVal(har, 'log.entries[1].response.status', 200);
       });
   });
