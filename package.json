@@ -35,7 +35,7 @@
     "url": "https://github.com/NeuraLegion/capture-har/issues"
   },
   "engines": {
-    "node": ">=6"
+    "node": ">=10"
   },
   "homepage": "https://github.com/NeuraLegion/capture-har",
   "devDependencies": {
