@@ -1,5 +1,6 @@
 var captureHarRaw = require('..');
-var validateHar = require('har-validator').default;
+var validateHar = require('har-validator').har;
+console.log(validateHar);
 
 function captureHar (...args) {
   return captureHarRaw(...args)

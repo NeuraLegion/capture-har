@@ -23,19 +23,19 @@ describe('captureHar', function () {
     })
       .then(() => captureHar({ url: 'http://localhost:3000' }))
       .then(har => {
-        assert.deepPropertyVal(har, 'log.entries[0].startedDateTime', '2010-01-01T00:00:00.000Z');
-        assert.deepPropertyVal(har, 'log.entries[0].time', 120);
+        assert.nestedPropertyVal(har, 'log.entries[0].startedDateTime', '2010-01-01T00:00:00.000Z');
+        assert.nestedPropertyVal(har, 'log.entries[0].time', 120);
 
-        assert.deepPropertyVal(har, 'log.entries[0].request.method', 'GET');
-        assert.deepPropertyVal(har, 'log.entries[0].request.url', 'http://localhost:3000/');
-        assert.deepPropertyVal(har, 'log.entries[0].request.headers[0].name', 'host');
-        assert.deepPropertyVal(har, 'log.entries[0].request.headers[0].value', 'localhost:3000');
+        assert.nestedPropertyVal(har, 'log.entries[0].request.method', 'GET');
+        assert.nestedPropertyVal(har, 'log.entries[0].request.url', 'http://localhost:3000/');
+        assert.nestedPropertyVal(har, 'log.entries[0].request.headers[0].name', 'host');
+        assert.nestedPropertyVal(har, 'log.entries[0].request.headers[0].value', 'localhost:3000');
 
-        assert.deepPropertyVal(har, 'log.entries[0].response.status', 200);
-        assert.deepPropertyVal(har, 'log.entries[0].response.content.size', 4);
-        assert.deepPropertyVal(har, 'log.entries[0].response.content.mimeType', 'x-unknown');
-        assert.deepPropertyVal(har, 'log.entries[0].response.content.text', 'body');
-        assert.deepPropertyVal(har, 'log.entries[0].response._remoteAddress', '127.0.0.1');
+        assert.nestedPropertyVal(har, 'log.entries[0].response.status', 200);
+        assert.nestedPropertyVal(har, 'log.entries[0].response.content.size', 4);
+        assert.nestedPropertyVal(har, 'log.entries[0].response.content.mimeType', 'x-unknown');
+        assert.nestedPropertyVal(har, 'log.entries[0].response.content.text', 'body');
+        assert.nestedPropertyVal(har, 'log.entries[0].response._remoteAddress', '127.0.0.1');
       });
   });
 
@@ -43,7 +43,7 @@ describe('captureHar', function () {
     return utils.mockServer(3000, (req, res) => res.end())
       .then(() => captureHar('http://localhost:3000'))
       .then(har => {
-        assert.deepPropertyVal(har, 'log.entries[0].request.url', 'http://localhost:3000/');
+        assert.nestedPropertyVal(har, 'log.entries[0].request.url', 'http://localhost:3000/');
       });
   });
 
@@ -51,7 +51,7 @@ describe('captureHar', function () {
     return utils.mockServer(3000, (req, res) => res.end())
       .then(() => captureHar({ url: urlUtil.parse('http://localhost:3000') }))
       .then(har => {
-        assert.deepPropertyVal(har, 'log.entries[0].response.status', 200);
+        assert.nestedPropertyVal(har, 'log.entries[0].response.status', 200);
       });
   });
 
@@ -92,7 +92,7 @@ describe('captureHar', function () {
           return header.name === 'set-cookie' && header.value === 'y';
         }), 'x-array response header');
 
-        assert.deepPropertyVal(har, 'log.entries[0].response.content.mimeType', 'application/json');
+        assert.nestedPropertyVal(har, 'log.entries[0].response.content.mimeType', 'application/json');
       });
   });
 
@@ -100,24 +100,24 @@ describe('captureHar', function () {
     return utils.mockServer(3000, (req, res) => res.end())
       .then(() => captureHar({ url: 'http://localhost:3000?param1=value1&param2=value2' }))
       .then(har => {
-        assert.deepPropertyVal(har, 'log.entries[0].request.queryString[0].name', 'param1');
-        assert.deepPropertyVal(har, 'log.entries[0].request.queryString[0].value', 'value1');
-        assert.deepPropertyVal(har, 'log.entries[0].request.queryString[1].name', 'param2');
-        assert.deepPropertyVal(har, 'log.entries[0].request.queryString[1].value', 'value2');
+        assert.nestedPropertyVal(har, 'log.entries[0].request.queryString[0].name', 'param1');
+        assert.nestedPropertyVal(har, 'log.entries[0].request.queryString[0].value', 'value1');
+        assert.nestedPropertyVal(har, 'log.entries[0].request.queryString[1].name', 'param2');
+        assert.nestedPropertyVal(har, 'log.entries[0].request.queryString[1].value', 'value2');
       });
   });
 
   it('handles ENOTFOUND (DNS level error)', function () {
     return captureHar({ url: 'http://x' })
       .then(har => {
-        assert.deepPropertyVal(har, 'log.entries[0].request.method', 'GET');
-        assert.deepPropertyVal(har, 'log.entries[0].request.url', 'http://x/');
+        assert.nestedPropertyVal(har, 'log.entries[0].request.method', 'GET');
+        assert.nestedPropertyVal(har, 'log.entries[0].request.url', 'http://x/');
 
-        assert.deepPropertyVal(har, 'log.entries[0].response.status', 0);
-        assert.deepPropertyVal(har, 'log.entries[0].response._error.code', 'ENOTFOUND');
-        assert.deepPropertyVal(har, 'log.entries[0].response._error.message', 'getaddrinfo ENOTFOUND x x:80');
-        assert.notDeepProperty(har, 'log.entries[0].response._error.stack');
-        assert.deepPropertyVal(har, 'log.entries[0].response.content.mimeType', 'x-unknown');
+        assert.nestedPropertyVal(har, 'log.entries[0].response.status', 0);
+        assert.nestedPropertyVal(har, 'log.entries[0].response._error.code', 'EAI_AGAIN');
+        assert.nestedPropertyVal(har, 'log.entries[0].response._error.message', 'getaddrinfo EAI_AGAIN x');
+        assert.notNestedPropertyVal(har, 'log.entries[0].response._error.stack');
+        assert.nestedPropertyVal(har, 'log.entries[0].response.content.mimeType', 'x-unknown');
       });
   });
 
@@ -131,10 +131,10 @@ describe('captureHar', function () {
     })
       .then(() => captureHar({ url: 'http://localhost:3000' }))
       .then(har => {
-        assert.deepPropertyVal(har, 'log.entries[0].response.status', 0);
-        assert.deepPropertyVal(har, 'log.entries[0].response._error.message', 'Invalid URL: http://');
-        assert.deepPropertyVal(har, 'log.entries[0].response._error.code', 'INVALID_REDIRECT_URL');
-        assert.notDeepProperty(har, 'log.entries[0].response._error.stack');
+        assert.nestedPropertyVal(har, 'log.entries[0].response.status', 0);
+        assert.nestedPropertyVal(har, 'log.entries[0].response._error.message', 'Invalid URL: http://');
+        assert.nestedPropertyVal(har, 'log.entries[0].response._error.code', 'INVALID_REDIRECT_URL');
+        assert.notNestedPropertyVal(har, 'log.entries[0].response._error.stack');
       });
   });
 
@@ -146,10 +146,10 @@ describe('captureHar', function () {
         url: 'http://localhost:3000'
       }))
       .then(har => {
-        assert.deepPropertyVal(har, 'log.entries[0].response.status', 0);
-        assert.deepPropertyVal(har, 'log.entries[0].response._error.code', 'ECONNRESET');
-        assert.deepPropertyVal(har, 'log.entries[0].response._error.message', 'socket hang up');
-        assert.deepPropertyVal(har, 'log.entries[0].response.content.mimeType', 'x-unknown');
+        assert.nestedPropertyVal(har, 'log.entries[0].response.status', 0);
+        assert.nestedPropertyVal(har, 'log.entries[0].response._error.code', 'ECONNRESET');
+        assert.nestedPropertyVal(har, 'log.entries[0].response._error.message', 'socket hang up');
+        assert.nestedPropertyVal(har, 'log.entries[0].response.content.mimeType', 'x-unknown');
       });
   });
 
@@ -157,7 +157,7 @@ describe('captureHar', function () {
     return utils.mockServer(3000, (req, res) => null)
       .then(() => captureHar({ url: 'http://localhost:3000', timeout: 100 }))
       .then(har => {
-        assert.deepPropertyVal(har, 'log.entries[0].response._error.code', 'ETIMEDOUT');
+        assert.nestedPropertyVal(har, 'log.entries[0].response._error.code', 'ETIMEDOUT');
       });
   });
 
@@ -178,14 +178,14 @@ describe('captureHar', function () {
         url: 'http://localhost:3000/bÃÃrfÖÖ'
       }))
       .then(har => {
-        assert.deepPropertyVal(har, 'log.entries[0].request.url', 'http://localhost:3000/bÃÃrfÖÖ');
-        assert.deepPropertyVal(har, 'log.entries[0].response.status', 301);
-        assert.deepPropertyVal(har, 'log.entries[0].response.headers[0].name', 'location');
-        assert.deepPropertyVal(har, 'log.entries[0].response.headers[0].value', 'http://localhost:3001/fÖÖbÃÃr');
-        assert.deepPropertyVal(har, 'log.entries[0].response.redirectURL', 'http://localhost:3001/f%C3%96%C3%96b%C3%83%C3%83r');
+        assert.nestedPropertyVal(har, 'log.entries[0].request.url', 'http://localhost:3000/bÃÃrfÖÖ');
+        assert.nestedPropertyVal(har, 'log.entries[0].response.status', 301);
+        assert.nestedPropertyVal(har, 'log.entries[0].response.headers[0].name', 'location');
+        assert.nestedPropertyVal(har, 'log.entries[0].response.headers[0].value', 'http://localhost:3001/fÖÖbÃÃr');
+        assert.nestedPropertyVal(har, 'log.entries[0].response.redirectURL', 'http://localhost:3001/f%C3%96%C3%96b%C3%83%C3%83r');
 
-        assert.deepPropertyVal(har, 'log.entries[1].request.url', 'http://localhost:3001/f%C3%96%C3%96b%C3%83%C3%83r');
-        assert.deepPropertyVal(har, 'log.entries[1].response.status', 200);
+        assert.nestedPropertyVal(har, 'log.entries[1].request.url', 'http://localhost:3001/f%C3%96%C3%96b%C3%83%C3%83r');
+        assert.nestedPropertyVal(har, 'log.entries[1].response.status', 200);
       });
   });
 
@@ -198,10 +198,10 @@ describe('captureHar', function () {
         url: 'https://localhost:3000'
       }))
       .then(har => {
-        assert.deepPropertyVal(har, 'log.entries[0].response.status', 0);
-        assert.deepPropertyVal(har, 'log.entries[0].response._error.code', 'EPROTO');
-        assert.deepProperty(har, 'log.entries[0].response._error.message');
-        assert.deepPropertyVal(har, 'log.entries[0].response.content.mimeType', 'x-unknown');
+        assert.nestedPropertyVal(har, 'log.entries[0].response.status', 0);
+        assert.nestedPropertyVal(har, 'log.entries[0].response._error.code', 'EPROTO');
+        assert.nestedProperty(har, 'log.entries[0].response._error.message');
+        assert.nestedPropertyVal(har, 'log.entries[0].response.content.mimeType', 'x-unknown');
       });
   });
 
@@ -213,10 +213,10 @@ describe('captureHar', function () {
         url: 'http://localhost:3000'
       }))
       .then(har => {
-        assert.deepPropertyVal(har, 'log.entries[0].response.status', 0);
-        assert.deepPropertyVal(har, 'log.entries[0].response._error.code', 'HPE_INVALID_CONSTANT');
-        assert.deepPropertyVal(har, 'log.entries[0].response._error.message', 'Parse Error');
-        assert.deepPropertyVal(har, 'log.entries[0].response.content.mimeType', 'x-unknown');
+        assert.nestedPropertyVal(har, 'log.entries[0].response.status', 0);
+        assert.nestedPropertyVal(har, 'log.entries[0].response._error.code', 'HPE_INVALID_CONSTANT');
+        assert.nestedPropertyVal(har, 'log.entries[0].response._error.message', 'Parse Error: Expected HTTP/');
+        assert.nestedPropertyVal(har, 'log.entries[0].response.content.mimeType', 'x-unknown');
       });
   });
 
@@ -235,10 +235,10 @@ describe('captureHar', function () {
         gzip: true
       }))
       .then(har => {
-        assert.deepPropertyVal(har, 'log.entries[0].response.status', 0);
-        assert.deepPropertyVal(har, 'log.entries[0].response._error.code', 'Z_DATA_ERROR');
-        assert.deepPropertyVal(har, 'log.entries[0].response._error.message', 'incorrect header check');
-        assert.deepPropertyVal(har, 'log.entries[0].response.content.mimeType', 'x-unknown');
+        assert.nestedPropertyVal(har, 'log.entries[0].response.status', 0);
+        assert.nestedPropertyVal(har, 'log.entries[0].response._error.code', 'Z_DATA_ERROR');
+        assert.nestedPropertyVal(har, 'log.entries[0].response._error.message', 'incorrect header check');
+        assert.nestedPropertyVal(har, 'log.entries[0].response.content.mimeType', 'x-unknown');
       });
   });
 
@@ -256,9 +256,9 @@ describe('captureHar', function () {
         json: true
       }))
       .then(har => {
-        assert.deepPropertyVal(har, 'log.entries[0].response.status', 200);
-        assert.deepPropertyVal(har, 'log.entries[0].response.content.mimeType', 'application/json');
-        assert.deepPropertyVal(har, 'log.entries[0].response.content.text', 'invalid');
+        assert.nestedPropertyVal(har, 'log.entries[0].response.status', 200);
+        assert.nestedPropertyVal(har, 'log.entries[0].response.content.mimeType', 'application/json');
+        assert.nestedPropertyVal(har, 'log.entries[0].response.content.text', 'invalid');
       });
   });
 
@@ -276,9 +276,9 @@ describe('captureHar', function () {
         json: true
       }))
       .then(har => {
-        assert.deepPropertyVal(har, 'log.entries[0].response.status', 200);
-        assert.deepPropertyVal(har, 'log.entries[0].response.content.mimeType', 'application/json');
-        assert.deepPropertyVal(har, 'log.entries[0].response.content.text', '{"hello":"world"}');
+        assert.nestedPropertyVal(har, 'log.entries[0].response.status', 200);
+        assert.nestedPropertyVal(har, 'log.entries[0].response.content.mimeType', 'application/json');
+        assert.nestedPropertyVal(har, 'log.entries[0].response.content.text', '{"hello":"world"}');
       });
   });
 
@@ -289,18 +289,18 @@ describe('captureHar', function () {
           'content-type': 'text/plain'
         }
       );
-      res.end(new Buffer([ 1, 2, 3, 4 ]));
+      res.end(Buffer.from([ 1, 2, 3, 4 ]));
     })
       .then(() => captureHar({
         url: 'http://localhost:3000',
         encoding: null
       }))
       .then(har => {
-        assert.deepPropertyVal(har, 'log.entries[0].response.status', 200);
-        assert.deepPropertyVal(har, 'log.entries[0].response.content.mimeType', 'text/plain');
-        assert.deepPropertyVal(har, 'log.entries[0].response.content.size', 4);
-        assert.deepPropertyVal(har, 'log.entries[0].response.content.text', 'AQIDBA==');
-        assert.deepPropertyVal(har, 'log.entries[0].response.content.encoding', 'base64');
+        assert.nestedPropertyVal(har, 'log.entries[0].response.status', 200);
+        assert.nestedPropertyVal(har, 'log.entries[0].response.content.mimeType', 'text/plain');
+        assert.nestedPropertyVal(har, 'log.entries[0].response.content.size', 4);
+        assert.nestedPropertyVal(har, 'log.entries[0].response.content.text', 'AQIDBA==');
+        assert.nestedPropertyVal(har, 'log.entries[0].response.content.encoding', 'base64');
       });
   });
 
@@ -315,9 +315,9 @@ describe('captureHar', function () {
         }
       }))
       .then(har => {
-        assert.deepPropertyVal(har, 'log.entries[0].request.httpVersion', 'HTTP/1.1');
+        assert.nestedPropertyVal(har, 'log.entries[0].request.httpVersion', 'HTTP/1.1');
 
-        assert.deepPropertyVal(har, 'log.entries[0].response.httpVersion', 'HTTP/0.9');
+        assert.nestedPropertyVal(har, 'log.entries[0].response.httpVersion', 'HTTP/0.9');
       });
   });
 
@@ -328,7 +328,7 @@ describe('captureHar', function () {
     })
       .then(() => captureHar({ url: 'http://localhost:3000' }))
       .then(har => {
-        assert.deepPropertyVal(har, 'log.entries[0].response.status', 404);
+        assert.nestedPropertyVal(har, 'log.entries[0].response.status', 404);
       });
   });
 
@@ -342,18 +342,55 @@ describe('captureHar', function () {
         }
       }))
       .then(har => {
-        assert.deepPropertyVal(har, 'log.entries[0].request.postData.mimeType', 'text/plain');
-        assert.deepPropertyVal(har, 'log.entries[0].request.postData.text', 'test');
+        assert.nestedPropertyVal(har, 'log.entries[0].request.postData.mimeType', 'text/plain');
+        assert.nestedPropertyVal(har, 'log.entries[0].request.postData.text', 'test');
       });
+  });
+
+  it('handles request body for form-data content', function () {
+    const formData = {
+      key1: 'value1',
+      key2: {
+        value: Buffer.from('{}'),
+        options: {
+          filename: 'file1.json',
+          contentType: 'application/json'
+        }
+      }
+    };
+    return utils.mockServer(3000, (req, res) => res.end())
+      .then(() => captureHar({
+        url: 'http://localhost:3000',
+        formData
+      }))
+      .then(har => {
+        assert.nestedPropertyVal(har, 'log.entries[0].request.postData.mimeType', 'multipart/form-data');
+      });
+  });
+
+
+  it('handles request body for form content', function () {
+    const form = {
+      key1: 'value1',
+      key2: 'value2'
+    };
+    return utils.mockServer(3000, (req, res) => res.end())
+        .then(() => captureHar({
+          url: 'http://localhost:3000',
+          form
+        }))
+        .then(har => {
+          assert.nestedPropertyVal(har, 'log.entries[0].request.postData.mimeType', 'application/x-www-form-urlencoded');
+        });
   });
 
   it('shouldn\'t put the full body when captured with withContent: false', function () {
     return utils.mockServer(3000, (req, res) => res.end('hello'))
       .then(() => captureHar({ url: 'http://localhost:3000' }, { withContent: false }))
       .then(har => {
-        assert.deepPropertyVal(har, 'log.entries[0].response.content.size', 5);
-        assert.deepPropertyVal(har, 'log.entries[0].response.content.mimeType', 'x-unknown');
-        assert.notDeepProperty(har, 'log.entries[0].response.content.text');
+        assert.nestedPropertyVal(har, 'log.entries[0].response.content.size', 5);
+        assert.nestedPropertyVal(har, 'log.entries[0].response.content.mimeType', 'x-unknown');
+        assert.notNestedPropertyVal(har, 'log.entries[0].response.content.text');
       });
   });
 
@@ -361,9 +398,9 @@ describe('captureHar', function () {
     return utils.mockServer(3000, (req, res) => res.end('ùùù'))
       .then(() => captureHar({ url: 'http://localhost:3000' }, { withContent: true, encoding: 'utf8' }))
       .then(har => {
-        assert.deepPropertyVal(har, 'log.entries[0].response.content.size', 6);
-        assert.deepPropertyVal(har, 'log.entries[0].response.content.mimeType', 'x-unknown');
-        assert.deepPropertyVal(har, 'log.entries[0].response.content.text', 'ùùù');
+        assert.nestedPropertyVal(har, 'log.entries[0].response.content.size', 6);
+        assert.nestedPropertyVal(har, 'log.entries[0].response.content.mimeType', 'x-unknown');
+        assert.nestedPropertyVal(har, 'log.entries[0].response.content.text', 'ùùù');
       });
   });
 
@@ -371,9 +408,9 @@ describe('captureHar', function () {
     return utils.mockServer(3000, (req, res) => res.end('ùùù'))
       .then(() => captureHar({ url: 'http://localhost:3000' }, { withContent: true, encoding: null }))
       .then(har => {
-        assert.deepPropertyVal(har, 'log.entries[0].response.content.size', 6);
-        assert.deepPropertyVal(har, 'log.entries[0].response.content.mimeType', 'x-unknown');
-        assert.deepPropertyVal(har, 'log.entries[0].response.content.text', 'ùùù');
+        assert.nestedPropertyVal(har, 'log.entries[0].response.content.size', 6);
+        assert.nestedPropertyVal(har, 'log.entries[0].response.content.mimeType', 'x-unknown');
+        assert.nestedPropertyVal(har, 'log.entries[0].response.content.text', 'ùùù');
       });
   });
 
@@ -381,9 +418,9 @@ describe('captureHar', function () {
     return utils.mockServer(3000, (req, res) => res.end('{"ù":1}'))
       .then(() => captureHar({ url: 'http://localhost:3000' }, { withContent: true, json: true }))
       .then(har => {
-        assert.deepPropertyVal(har, 'log.entries[0].response.content.size', 8);
-        assert.deepPropertyVal(har, 'log.entries[0].response.content.mimeType', 'x-unknown');
-        assert.deepPropertyVal(har, 'log.entries[0].response.content.text', '{"ù":1}');
+        assert.nestedPropertyVal(har, 'log.entries[0].response.content.size', 8);
+        assert.nestedPropertyVal(har, 'log.entries[0].response.content.mimeType', 'x-unknown');
+        assert.nestedPropertyVal(har, 'log.entries[0].response.content.text', '{"ù":1}');
       });
   });
 
@@ -391,9 +428,9 @@ describe('captureHar', function () {
     return utils.mockServer(3000, (req, res) => res.end('ùùù'))
       .then(() => captureHar({ url: 'http://localhost:3000' }, { withContent: false, encoding: 'utf8' }))
       .then(har => {
-        assert.deepPropertyVal(har, 'log.entries[0].response.content.size', 6);
-        assert.deepPropertyVal(har, 'log.entries[0].response.content.mimeType', 'x-unknown');
-        assert.notDeepProperty(har, 'log.entries[0].response.content.text');
+        assert.nestedPropertyVal(har, 'log.entries[0].response.content.size', 6);
+        assert.nestedPropertyVal(har, 'log.entries[0].response.content.mimeType', 'x-unknown');
+        assert.notNestedPropertyVal(har, 'log.entries[0].response.content.text');
       });
   });
 
@@ -401,9 +438,9 @@ describe('captureHar', function () {
     return utils.mockServer(3000, (req, res) => res.end('ùùù'))
       .then(() => captureHar({ url: 'http://localhost:3000' }, { withContent: false, encoding: null }))
       .then(har => {
-        assert.deepPropertyVal(har, 'log.entries[0].response.content.size', 6);
-        assert.deepPropertyVal(har, 'log.entries[0].response.content.mimeType', 'x-unknown');
-        assert.notDeepProperty(har, 'log.entries[0].response.content.text');
+        assert.nestedPropertyVal(har, 'log.entries[0].response.content.size', 6);
+        assert.nestedPropertyVal(har, 'log.entries[0].response.content.mimeType', 'x-unknown');
+        assert.notNestedPropertyVal(har, 'log.entries[0].response.content.text');
       });
   });
 
@@ -411,9 +448,9 @@ describe('captureHar', function () {
     return utils.mockServer(3000, (req, res) => res.end('{"ù":1}'))
       .then(() => captureHar({ url: 'http://localhost:3000' }, { withContent: false, json: true }))
       .then(har => {
-        assert.deepPropertyVal(har, 'log.entries[0].response.content.size', 8);
-        assert.deepPropertyVal(har, 'log.entries[0].response.content.mimeType', 'x-unknown');
-        assert.notDeepProperty(har, 'log.entries[0].response.content.text');
+        assert.nestedPropertyVal(har, 'log.entries[0].response.content.size', 8);
+        assert.nestedPropertyVal(har, 'log.entries[0].response.content.mimeType', 'x-unknown');
+        assert.notNestedPropertyVal(har, 'log.entries[0].response.content.text');
       });
   });
 
@@ -421,9 +458,9 @@ describe('captureHar', function () {
     return utils.mockServer(3000, (req, res) => res.end(Buffer.alloc(6)))
       .then(() => captureHar({ url: 'http://localhost:3000' }, { withContent: false, maxContentLength: 4 }))
       .then(har => {
-        assert.deepPropertyVal(har, 'log.entries[0].response.content.size', 6);
-        assert.deepPropertyVal(har, 'log.entries[0].response.content.mimeType', 'x-unknown');
-        assert.notDeepProperty(har, 'log.entries[0].response.content.text');
+        assert.nestedPropertyVal(har, 'log.entries[0].response.content.size', 6);
+        assert.nestedPropertyVal(har, 'log.entries[0].response.content.mimeType', 'x-unknown');
+        assert.notNestedPropertyVal(har, 'log.entries[0].response.content.text');
       });
   });
 
@@ -431,9 +468,9 @@ describe('captureHar', function () {
     return utils.mockServer(3000, (req, res) => res.end(Buffer.alloc(6)))
       .then(() => captureHar({ url: 'http://localhost:3000' }, { maxContentLength: 4 }))
       .then(har => {
-        assert.deepPropertyVal(har, 'log.entries[0].response._error.message', 'Maximum response size exceeded');
-        assert.deepPropertyVal(har, 'log.entries[0].response._error.code', 'MAX_RES_BODY_SIZE');
-        assert.notDeepProperty(har, 'log.entries[0].response.content.text');
+        assert.nestedPropertyVal(har, 'log.entries[0].response._error.message', 'Maximum response size exceeded');
+        assert.nestedPropertyVal(har, 'log.entries[0].response._error.code', 'MAX_RES_BODY_SIZE');
+        assert.notNestedPropertyVal(har, 'log.entries[0].response.content.text');
       });
   });
 
@@ -441,8 +478,8 @@ describe('captureHar', function () {
     return utils.mockServer(3000, (req, res) => res.end(Buffer.alloc(2)))
       .then(() => captureHar({ url: 'http://localhost:3000' }, { maxContentLength: 4 }))
       .then(har => {
-        assert.deepPropertyVal(har, 'log.entries[0].response.content.size', 2);
-        assert.deepPropertyVal(har, 'log.entries[0].response.content.mimeType', 'x-unknown');
+        assert.nestedPropertyVal(har, 'log.entries[0].response.content.size', 2);
+        assert.nestedPropertyVal(har, 'log.entries[0].response.content.mimeType', 'x-unknown');
         assert.strictEqual(Buffer.from(har.log.entries[0].response.content.text, 'utf8').length, 2);
       });
   });
@@ -454,9 +491,9 @@ describe('captureHar', function () {
     })
       .then(() => captureHar({ url: 'http://localhost:3000' }, { maxContentLength: 4 }))
       .then(har => {
-        assert.deepPropertyVal(har, 'log.entries[0].response._error.message', 'Maximum response size exceeded');
-        assert.deepPropertyVal(har, 'log.entries[0].response._error.code', 'MAX_RES_BODY_SIZE');
-        assert.notDeepProperty(har, 'log.entries[0].response.content.text');
+        assert.nestedPropertyVal(har, 'log.entries[0].response._error.message', 'Maximum response size exceeded');
+        assert.nestedPropertyVal(har, 'log.entries[0].response._error.code', 'MAX_RES_BODY_SIZE');
+        assert.notNestedPropertyVal(har, 'log.entries[0].response.content.text');
       });
   });
 
@@ -467,8 +504,8 @@ describe('captureHar', function () {
     })
       .then(() => captureHar({ url: 'http://localhost:3000' }, { maxContentLength: 4 }))
       .then(har => {
-        assert.deepPropertyVal(har, 'log.entries[0].response.content.size', 1);
-        assert.deepPropertyVal(har, 'log.entries[0].response.content.mimeType', 'x-unknown');
+        assert.nestedPropertyVal(har, 'log.entries[0].response.content.size', 1);
+        assert.nestedPropertyVal(har, 'log.entries[0].response.content.mimeType', 'x-unknown');
         assert.strictEqual(Buffer.from(har.log.entries[0].response.content.text, 'utf8').length, 1);
       });
   });
@@ -480,8 +517,8 @@ describe('captureHar', function () {
         url: 'http://localhost:3000'
       }))
       .then(har => {
-        assert.deepPropertyVal(har, 'log.entries[0].request.method', 'POST');
-        assert.deepPropertyVal(har, 'log.entries[0].response.content.text', 'POST');
+        assert.nestedPropertyVal(har, 'log.entries[0].request.method', 'POST');
+        assert.nestedPropertyVal(har, 'log.entries[0].response.content.text', 'POST');
       });
   });
 
@@ -500,29 +537,29 @@ describe('captureHar', function () {
         }
       }))
       .then(har => {
-        assert.deepPropertyVal(har, 'log.entries[0].request.cookies[0].name', 'cookie1');
-        assert.deepPropertyVal(har, 'log.entries[0].request.cookies[0].value', 'value1');
-        assert.notDeepProperty(har, 'log.entries[0].request.cookies[0].path');
-        assert.notDeepProperty(har, 'log.entries[0].request.cookies[0].domain');
-        assert.notDeepProperty(har, 'log.entries[0].request.cookies[0].expires');
-        assert.deepPropertyVal(har, 'log.entries[0].request.cookies[0].httpOnly', false);
-        assert.deepPropertyVal(har, 'log.entries[0].request.cookies[0].secure', false);
-        assert.deepPropertyVal(har, 'log.entries[0].request.cookies[1].name', 'cookie2');
-        assert.deepPropertyVal(har, 'log.entries[0].request.cookies[1].value', 'value2');
+        assert.nestedPropertyVal(har, 'log.entries[0].request.cookies[0].name', 'cookie1');
+        assert.nestedPropertyVal(har, 'log.entries[0].request.cookies[0].value', 'value1');
+        assert.notNestedPropertyVal(har, 'log.entries[0].request.cookies[0].path');
+        assert.notNestedPropertyVal(har, 'log.entries[0].request.cookies[0].domain');
+        assert.notNestedPropertyVal(har, 'log.entries[0].request.cookies[0].expires');
+        assert.nestedPropertyVal(har, 'log.entries[0].request.cookies[0].httpOnly', false);
+        assert.nestedPropertyVal(har, 'log.entries[0].request.cookies[0].secure', false);
+        assert.nestedPropertyVal(har, 'log.entries[0].request.cookies[1].name', 'cookie2');
+        assert.nestedPropertyVal(har, 'log.entries[0].request.cookies[1].value', 'value2');
 
-        assert.deepPropertyVal(har, 'log.entries[0].response.cookies[0].name', 'cookie3');
-        assert.deepPropertyVal(har, 'log.entries[0].response.cookies[0].value', 'value3');
-        assert.deepPropertyVal(har, 'log.entries[0].response.cookies[0].path', '/path');
-        assert.deepPropertyVal(har, 'log.entries[0].response.cookies[0].domain', 'www.google.com');
-        assert.deepPropertyVal(har, 'log.entries[0].response.cookies[0].expires', '2010-01-01T00:00:00.000Z');
-        assert.deepPropertyVal(har, 'log.entries[0].response.cookies[0].httpOnly', true);
-        assert.deepPropertyVal(har, 'log.entries[0].response.cookies[0].secure', true);
-        assert.deepPropertyVal(har, 'log.entries[0].response.cookies[1].name', 'cookie4');
-        assert.deepPropertyVal(har, 'log.entries[0].response.cookies[1].value', 'value4');
-        assert.notDeepProperty(har, 'log.entries[0].response.cookies[1].path');
-        assert.deepPropertyVal(har, 'log.entries[0].response.cookies[1].httpOnly', false);
-        assert.deepPropertyVal(har, 'log.entries[0].response.cookies[1].secure', false);
-        assert.notDeepProperty(har, 'log.entries[0].response.cookies[1].domain');
+        assert.nestedPropertyVal(har, 'log.entries[0].response.cookies[0].name', 'cookie3');
+        assert.nestedPropertyVal(har, 'log.entries[0].response.cookies[0].value', 'value3');
+        assert.nestedPropertyVal(har, 'log.entries[0].response.cookies[0].path', '/path');
+        assert.nestedPropertyVal(har, 'log.entries[0].response.cookies[0].domain', 'www.google.com');
+        assert.nestedPropertyVal(har, 'log.entries[0].response.cookies[0].expires', '2010-01-01T00:00:00.000Z');
+        assert.nestedPropertyVal(har, 'log.entries[0].response.cookies[0].httpOnly', true);
+        assert.nestedPropertyVal(har, 'log.entries[0].response.cookies[0].secure', true);
+        assert.nestedPropertyVal(har, 'log.entries[0].response.cookies[1].name', 'cookie4');
+        assert.nestedPropertyVal(har, 'log.entries[0].response.cookies[1].value', 'value4');
+        assert.notNestedPropertyVal(har, 'log.entries[0].response.cookies[1].path');
+        assert.nestedPropertyVal(har, 'log.entries[0].response.cookies[1].httpOnly', false);
+        assert.nestedPropertyVal(har, 'log.entries[0].response.cookies[1].secure', false);
+        assert.notNestedPropertyVal(har, 'log.entries[0].response.cookies[1].domain');
       });
   });
 
@@ -533,8 +570,8 @@ describe('captureHar', function () {
     })
       .then(() => captureHar({ url: 'http://localhost:3000' }))
       .then(har => {
-        assert.deepPropertyVal(har, 'log.entries[0].response.cookies[0].name', 'cookie');
-        assert.deepPropertyVal(har, 'log.entries[0].response.cookies[0].value', 'value');
+        assert.nestedPropertyVal(har, 'log.entries[0].response.cookies[0].name', 'cookie');
+        assert.nestedPropertyVal(har, 'log.entries[0].response.cookies[0].value', 'value');
       });
   });
 
@@ -546,7 +583,7 @@ describe('captureHar', function () {
       .then(() => captureHar({ url: 'http://localhost:3000' }))
       .then(har => {
         assert.lengthOf(har.log.entries[0].response.cookies, 0);
-        assert.deepPropertyVal(har, 'log.entries[0].response.headers[0].value', 'Secure; HttpOnly');
+        assert.nestedPropertyVal(har, 'log.entries[0].response.headers[0].value', 'Secure; HttpOnly');
       });
   });
 
@@ -557,7 +594,7 @@ describe('captureHar', function () {
     })
       .then(() => captureHar({ url: 'http://localhost:3000' }))
       .then(har => {
-        assert.deepPropertyVal(har, 'log.entries[0].response.content.mimeType', 'image/svg+xml');
+        assert.nestedPropertyVal(har, 'log.entries[0].response.content.mimeType', 'image/svg+xml');
       });
   });
 
@@ -568,7 +605,7 @@ describe('captureHar', function () {
     })
       .then(() => captureHar({ url: 'http://localhost:3000' }))
       .then(har => {
-        assert.deepPropertyVal(har, 'log.entries[0].response.content.mimeType', 'x-unknown');
+        assert.nestedPropertyVal(har, 'log.entries[0].response.content.mimeType', 'x-unknown');
       });
   });
 
@@ -596,7 +633,7 @@ describe('captureHar', function () {
         url: 'http://127.0.0.1:3000'
       }))
       .then(har => {
-        assert.deepPropertyVal(har, 'log.entries[0].request.url', 'http://127.0.0.1:3000/');
+        assert.nestedPropertyVal(har, 'log.entries[0].request.url', 'http://127.0.0.1:3000/');
       });
   });
 
@@ -612,9 +649,9 @@ describe('captureHar', function () {
         }
       }))
       .then(har => {
-        assert.deepPropertyVal(har, 'log.entries[0].request.url', 'http://127.0.0.1:3000/');
-        assert.deepPropertyVal(har, 'log.entries[0].request.headers[0].name', 'host');
-        assert.deepPropertyVal(har, 'log.entries[0].request.headers[0].value', 'localhost:3000');
+        assert.nestedPropertyVal(har, 'log.entries[0].request.url', 'http://127.0.0.1:3000/');
+        assert.nestedPropertyVal(har, 'log.entries[0].request.headers[0].name', 'host');
+        assert.nestedPropertyVal(har, 'log.entries[0].request.headers[0].value', 'localhost:3000');
       });
   });
 
@@ -627,7 +664,7 @@ describe('captureHar', function () {
         url: 'http://127.0.0.1:3000'
       }))
       .then(har => {
-        assert.deepPropertyVal(har, 'log.entries[0].response._remoteAddress', '127.0.0.1');
+        assert.nestedPropertyVal(har, 'log.entries[0].response._remoteAddress', '127.0.0.1');
       });
   });
 });

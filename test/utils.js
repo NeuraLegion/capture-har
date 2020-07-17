@@ -26,7 +26,8 @@ function mockServer (port, handler, protocol = 'http') {
             return new Promise((resolve, reject) => {
               server.close(err => err ? reject(err) : resolve());
             });
-          }});
+          }
+        });
       }
     });
   });
