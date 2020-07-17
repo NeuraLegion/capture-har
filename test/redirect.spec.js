@@ -21,10 +21,10 @@ describe('redirect', function () {
     })
       .then(() => captureHar({ url: 'http://localhost:3000' }))
       .then(har => {
-        assert.deepPropertyVal(har, 'log.entries[0].response.status', 0);
+        assert.nestedPropertyVal(har, 'log.entries[0].response.status', 0);
         assert.lengthOf(har.log.entries, 1);
-        assert.deepPropertyVal(har, 'log.entries[0].response._error.message', 'Missing location header');
-        assert.deepPropertyVal(har, 'log.entries[0].response._error.code', 'NOLOCATION');
+        assert.nestedPropertyVal(har, 'log.entries[0].response._error.message', 'Missing location header');
+        assert.nestedPropertyVal(har, 'log.entries[0].response._error.code', 'NOLOCATION');
       });
   });
 
@@ -44,17 +44,17 @@ describe('redirect', function () {
     })
       .then(() => captureHar({ url: 'http://localhost:3000' }))
       .then(har => {
-        assert.deepPropertyVal(har, 'log.entries[0].startedDateTime', '2010-01-01T00:00:00.000Z');
-        assert.deepPropertyVal(har, 'log.entries[0].time', 1000);
+        assert.nestedPropertyVal(har, 'log.entries[0].startedDateTime', '2010-01-01T00:00:00.000Z');
+        assert.nestedPropertyVal(har, 'log.entries[0].time', 1000);
 
-        assert.deepPropertyVal(har, 'log.entries[0].response.status', 301);
-        assert.deepPropertyVal(har, 'log.entries[0].response.redirectURL', 'http://localhost:3000/maps');
+        assert.nestedPropertyVal(har, 'log.entries[0].response.status', 301);
+        assert.nestedPropertyVal(har, 'log.entries[0].response.redirectURL', 'http://localhost:3000/maps');
 
-        assert.deepPropertyVal(har, 'log.entries[1].startedDateTime', '2010-01-01T00:00:01.000Z');
-        assert.deepPropertyVal(har, 'log.entries[1].time', 2000);
+        assert.nestedPropertyVal(har, 'log.entries[1].startedDateTime', '2010-01-01T00:00:01.000Z');
+        assert.nestedPropertyVal(har, 'log.entries[1].time', 2000);
 
-        assert.notDeepProperty(har, 'log.entries[1].response._error');
-        assert.notDeepProperty(har, 'log.entries[1].response._error');
+        assert.notNestedPropertyVal(har, 'log.entries[1].response._error');
+        assert.notNestedPropertyVal(har, 'log.entries[1].response._error');
       });
   });
 
@@ -66,8 +66,8 @@ describe('redirect', function () {
     })
       .then(() => captureHar({ url: 'http://localhost:3000', followRedirect: false }))
       .then(har => {
-        assert.deepPropertyVal(har, 'log.entries[0].response.status', 301);
-        assert.deepPropertyVal(har, 'log.entries[0].response.redirectURL', 'http://localhost:3000/maps');
+        assert.nestedPropertyVal(har, 'log.entries[0].response.status', 301);
+        assert.nestedPropertyVal(har, 'log.entries[0].response.redirectURL', 'http://localhost:3000/maps');
         assert.lengthOf(har.log.entries, 1);
       });
   });
@@ -81,8 +81,8 @@ describe('redirect', function () {
       .then(() => captureHar({ url: 'http://localhost:3000', maxRedirects: 5 }))
       .then(har => {
         assert.lengthOf(har.log.entries, 6);
-        assert.deepPropertyVal(har, 'log.entries[5].response._error.message', 'Max redirects exceeded');
-        assert.deepPropertyVal(har, 'log.entries[5].response._error.code', 'MAXREDIRECTS');
+        assert.nestedPropertyVal(har, 'log.entries[5].response._error.message', 'Max redirects exceeded');
+        assert.nestedPropertyVal(har, 'log.entries[5].response._error.code', 'MAXREDIRECTS');
       });
   });
 
@@ -139,13 +139,13 @@ describe('redirect', function () {
         }
       }))
       .then(har => {
-        assert.deepPropertyVal(har, 'log.entries[0].response.content.text', 'Host: localhost:3000');
-        assert.deepPropertyVal(har, 'log.entries[1].response.content.text', 'Host: localhost:3001');
+        assert.nestedPropertyVal(har, 'log.entries[0].response.content.text', 'Host: localhost:3000');
+        assert.nestedPropertyVal(har, 'log.entries[1].response.content.text', 'Host: localhost:3001');
 
-        assert.deepPropertyVal(har, 'log.entries[0].request.headers[0].name', 'host');
-        assert.deepPropertyVal(har, 'log.entries[0].request.headers[0].value', 'localhost:3000');
-        assert.deepPropertyVal(har, 'log.entries[1].request.headers[0].name', 'host');
-        assert.deepPropertyVal(har, 'log.entries[1].request.headers[0].value', 'localhost:3001');
+        assert.nestedPropertyVal(har, 'log.entries[0].request.headers[0].name', 'host');
+        assert.nestedPropertyVal(har, 'log.entries[0].request.headers[0].value', 'localhost:3000');
+        assert.nestedPropertyVal(har, 'log.entries[1].request.headers[0].name', 'host');
+        assert.nestedPropertyVal(har, 'log.entries[1].request.headers[0].value', 'localhost:3001');
       });
   });
 
@@ -163,13 +163,13 @@ describe('redirect', function () {
         headers: {}
       }))
       .then(har => {
-        assert.deepPropertyVal(har, 'log.entries[0].response.content.text', 'host: localhost:3000');
-        assert.deepPropertyVal(har, 'log.entries[1].response.content.text', 'host: localhost:3001');
+        assert.nestedPropertyVal(har, 'log.entries[0].response.content.text', 'host: localhost:3000');
+        assert.nestedPropertyVal(har, 'log.entries[1].response.content.text', 'host: localhost:3001');
 
-        assert.deepPropertyVal(har, 'log.entries[0].request.headers[0].name', 'host');
-        assert.deepPropertyVal(har, 'log.entries[0].request.headers[0].value', 'localhost:3000');
-        assert.deepPropertyVal(har, 'log.entries[1].request.headers[0].name', 'host');
-        assert.deepPropertyVal(har, 'log.entries[1].request.headers[0].value', 'localhost:3001');
+        assert.nestedPropertyVal(har, 'log.entries[0].request.headers[0].name', 'host');
+        assert.nestedPropertyVal(har, 'log.entries[0].request.headers[0].value', 'localhost:3000');
+        assert.nestedPropertyVal(har, 'log.entries[1].request.headers[0].name', 'host');
+        assert.nestedPropertyVal(har, 'log.entries[1].request.headers[0].value', 'localhost:3001');
       });
   });
 
@@ -183,14 +183,14 @@ describe('redirect', function () {
         url: 'http://localhost:3000'
       }))
       .then(har => {
-        assert.deepPropertyVal(har, 'log.entries[0].response.status', 301);
-        assert.deepPropertyVal(har, 'log.entries[0].response.headers[0].name', 'location');
-        assert.deepPropertyVal(har, 'log.entries[0].response.headers[0].value', 'file:///etc/passwd');
+        assert.nestedPropertyVal(har, 'log.entries[0].response.status', 301);
+        assert.nestedPropertyVal(har, 'log.entries[0].response.headers[0].name', 'location');
+        assert.nestedPropertyVal(har, 'log.entries[0].response.headers[0].value', 'file:///etc/passwd');
 
-        assert.deepPropertyVal(har, 'log.entries[1].request.url', 'file:///etc/passwd');
-        assert.deepPropertyVal(har, 'log.entries[1].request.headers.length', 0);
+        assert.nestedPropertyVal(har, 'log.entries[1].request.url', 'file:///etc/passwd');
+        assert.nestedPropertyVal(har, 'log.entries[1].request.headers.length', 0);
 
-        assert.deepPropertyVal(har, 'log.entries[1].response._error.message', 'Invalid URI "file:///etc/passwd"');
+        assert.nestedPropertyVal(har, 'log.entries[1].response._error.message', 'Invalid URI "file:///etc/passwd"');
       });
   });
 
@@ -206,8 +206,8 @@ describe('redirect', function () {
         maxRedirects: 1
       }))
       .then(har => {
-        assert.deepPropertyVal(har, 'log.entries[0].response.status', 301);
-        assert.deepPropertyVal(har, 'log.entries[0].response.redirectURL', 'http://[::1]:3000/');
+        assert.nestedPropertyVal(har, 'log.entries[0].response.status', 301);
+        assert.nestedPropertyVal(har, 'log.entries[0].response.redirectURL', 'http://[::1]:3000/');
       });
   });
 
@@ -223,8 +223,8 @@ describe('redirect', function () {
         maxRedirects: 1
       }))
       .then(har => {
-        assert.deepPropertyVal(har, 'log.entries[0].response.status', 301);
-        assert.deepPropertyVal(har, 'log.entries[0].response.redirectURL', 'http://localhost:3000/');
+        assert.nestedPropertyVal(har, 'log.entries[0].response.status', 301);
+        assert.nestedPropertyVal(har, 'log.entries[0].response.redirectURL', 'http://localhost:3000/');
       });
   });
 
@@ -240,8 +240,8 @@ describe('redirect', function () {
         maxRedirects: 1
       }))
       .then(har => {
-        assert.deepPropertyVal(har, 'log.entries[0].response.status', 301);
-        assert.deepPropertyVal(har, 'log.entries[0].response.redirectURL', 'http://localhost:3000/');
+        assert.nestedPropertyVal(har, 'log.entries[0].response.status', 301);
+        assert.nestedPropertyVal(har, 'log.entries[0].response.redirectURL', 'http://localhost:3000/');
       });
   });
 

@@ -1,47 +1,60 @@
 {
-  "name": "capture-har",
-  "version": "1.1.0",
-  "description": "",
-  "main": "lib",
+  "name": "@neuralegion/capture-har",
+  "version": "0.0.0",
+  "private": false,
+  "main": "lib/index.js",
+  "typings": "lib/index.d.ts",
+  "files": [
+    "lib"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NeuraLegion/capture-har.git"
+  },
+  "author": {
+    "name": "Artem Derevnjuk",
+    "email": "artem.derevnjuk@neuralegion.com"
+  },
   "scripts": {
-    "test": " npm run lint && nyc npm run mocha",
+    "test": "nyc npm run mocha",
     "lint": "semistandard | snazzy",
     "mocha": "mocha ./test",
     "version": "echo $npm_package_version",
     "watch:mocha": "mocha -w ./test"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/Woorank/capture-har"
   },
   "keywords": [
     "capture",
     "har",
     "request"
   ],
-  "author": "WooRank",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/Woorank/capture-har/issues"
+    "url": "https://github.com/NeuraLegion/capture-har/issues"
   },
   "engines": {
-    "node": ">=6"
+    "node": ">=10"
   },
-  "homepage": "https://github.com/Woorank/capture-har",
+  "homepage": "https://github.com/NeuraLegion/capture-har",
   "devDependencies": {
-    "chai": "^3.5.0",
-    "har-validator": "^2.1.3",
-    "lolex": "2.3.2",
-    "mocha": "^3.0.2",
-    "nyc": "^7.1.0",
-    "semistandard": "^8.0.0",
-    "snazzy": "^4.0.1"
+    "@types/har-format": "^1.2.4",
+    "@types/node": "~6.14.10",
+    "chai": "^4.2.0",
+    "har-validator": "^5.1.3",
+    "lolex": "6.0.0",
+    "mocha": "^8.0.1",
+    "nyc": "^15.1.0",
+    "semistandard": "^14.2.2",
+    "snazzy": "^8.0.0"
   },
   "dependencies": {
-    "content-type": "^1.0.2",
-    "request": "^2.74.0",
-    "request-promise": "^4.2.2",
+    "@types/request": "^2.48.5",
+    "content-type": "^1.0.4",
+    "request": "^2.88.2",
+    "request-promise": "^4.2.5",
     "through": "^2.3.8",
-    "tough-cookie": "^2.3.1"
+    "tough-cookie": "^4.0.0"
   }
 }
