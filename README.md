@@ -1,6 +1,6 @@
 # capture-har
 
-**THIS REPO HAS BEEN DEPRECATED. THE DEVELOPMENT HAS MOVED TO A NEW REPOSITORY: https://github.com/NeuraLegion/har-recorder**
+**THIS REPO HAS BEEN DEPRECATED. THE DEVELOPMENT HAS MOVED TO A NEW REPOSITORY: https://github.com/NeuraLegion/har-sdk**
 
 Fetch requests in HAR format
 
