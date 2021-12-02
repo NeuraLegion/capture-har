@@ -247,7 +247,7 @@ describe('redirect', function () {
 
   it('should have remoteAddress after redirect', function () {
     return captureHar({
-      url: 'http://woorank.com',
+      url: 'http://google.com',
       followRedirect: true
     })
     .then(har => {

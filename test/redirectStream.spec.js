@@ -294,7 +294,7 @@ describe('redirectStream', () => {
 
   it('should have remoteAddress after redirect', done => {
     const captureHar = new CaptureHar(request);
-    captureHar.start({ url: 'http://woorank.com', followRedirect: true })
+    captureHar.start({ url: 'http://google.com', followRedirect: true })
       .on('end', () => {
         const har = captureHar.stop();
         assert(net.isIP(har.log.entries[1].response._remoteAddress));
